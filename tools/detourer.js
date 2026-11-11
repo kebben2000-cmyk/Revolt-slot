@@ -25,8 +25,10 @@ const BOXES = process.argv[4] ? JSON.parse(process.argv[4]) : {
       const s = ((y + y0) * IW + (x + x0)) * 3, d = (y * w + x) * 4;
       rgba[d] = data[s]; rgba[d + 1] = data[s + 1]; rgba[d + 2] = data[s + 2]; rgba[d + 3] = 255;
     }
-    const isBg = i => { const r = rgba[i*4], g = rgba[i*4+1], b = rgba[i*4+2];
+    const isBgDefault = i => { const r = rgba[i*4], g = rgba[i*4+1], b = rgba[i*4+2];
       const mn = Math.min(r, g, b), mx = Math.max(r, g, b); return mn > 218 && mx - mn < 24; };
+    // BGMODE=gray : fond gris ou blanc peu saturé (dégradé, trames) — le contour noir du dessin arrête le remplissage
+    const isBg = process.env.BGMODE === "gray" ? (i => { const r = rgba[i*4], g = rgba[i*4+1], b = rgba[i*4+2]; const mn = Math.min(r, g, b), mx = Math.max(r, g, b); return mx > 105 && mx - mn < 26; }) : isBgDefault;
     // 1. remplissage du fond depuis les bords
     const bg = new Uint8Array(n), q = new Int32Array(n); let qh = 0, qt = 0;
     const push = i => { if (!bg[i] && isBg(i)) { bg[i] = 1; q[qt++] = i; } };
@@ -84,7 +86,7 @@ const BOXES = process.argv[4] ? JSON.parse(process.argv[4]) : {
     await sharp({ create: { width: side, height: side, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
       .composite([{ input: cropped, left: Math.round((side - cw) / 2), top: Math.round((side - ch) / 2) }])
       .png().toBuffer()
-      .then(b => sharp(b).resize(512, 512).png({ compressionLevel: 9 }).toFile(path.join(OUT, name + '.png')));
+      .then(b => sharp(b).resize(+process.env.SIZE || 512, +process.env.SIZE || 512).png({ compressionLevel: 9 }).toFile(path.join(OUT, name + '.png')));
     console.log(name, `${cw}x${ch}`, 'morceaux gardés:', sizes.filter(s => s >= big * (+process.env.KEEP || 0.04)).length);
   }
 })();
