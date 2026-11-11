@@ -424,6 +424,16 @@ body.strike #stage.portrait #side .promo { display: none; }
 .close { position: sticky; top: 0; float: right; background: var(--black); color: var(--paper); border: 0; padding: 8px 14px; font-family: var(--display); font-size: 18px; text-transform: uppercase; z-index: 2; }
 #stage.portrait .paytable { grid-template-columns: 1fr 1fr; }
 
+/* ---------- Projectiles lancés par la foule ---------- */
+#fx { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; overflow: visible; }
+.proj { position: absolute; left: 0; top: 0; will-change: transform; filter: drop-shadow(0 10px 8px rgba(0,0,0,.55)); }
+.proj img, .proj svg { width: 100%; height: 100%; display: block; }
+.debris { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.crack { position: absolute; inset: 0; z-index: 4; pointer-events: none; animation: crackIn .12s ease-out; }
+@keyframes crackIn { from { transform: scale(.6); opacity: 0; } }
+.cell.hitfx { animation: hitfx .38s cubic-bezier(.3,1.6,.5,1); }
+@keyframes hitfx { 0% { transform: scale(.88) rotate(-3deg); } 40% { transform: scale(1.04) rotate(2deg); } 100% { transform: none; } }
+
 @media (prefers-reduced-motion: reduce) {
   #machine.shake, #reels.thump, #reels.quake { animation: none; }
 }
@@ -540,6 +550,7 @@ body.strike #stage.portrait #side .promo { display: none; }
   </div>
 
   <button id="buy" aria-label="Buy the General Strike feature"></button>
+  <div id="fx" aria-hidden="true"></div>
 
   <!-- Gros gain -->
   <div class="overlay" id="bigwin"><div class="poster red">
@@ -694,7 +705,7 @@ function cellAt(r, row) { return reels[r].strip.children[row]; }
 function clearMarks() {
   document.querySelectorAll('.cell.hit, .cell.dim').forEach(c => c.classList.remove('hit', 'dim'));
   $('lines').innerHTML = '';
-  document.querySelectorAll('.mega-banner').forEach(b => b.remove());
+  document.querySelectorAll('.mega-banner, .crack').forEach(b => b.remove());
   $('stamp').classList.remove('show');
 }
 
@@ -738,7 +749,90 @@ function scatterImpact(r, row) {
   if (!reduceMotion) { restart($('machine'), 'shake'); if (scatThisSpin >= 2) restart(reelsEl, 'quake'); }
 }
 // gros moment quand 3 barricades (ou plus) lancent le General Strike
+/* ---------- La foule lance des projectiles sur les cases ---------- */
+const PROJ = [
+  { kind: 'stone', size: 74, html: '<img src="assets/symbols/pave.png" alt="">' },
+  { kind: 'stone', size: 46, html: '<svg viewBox="0 0 60 50"><path d="M6 30l8-18 18-6 16 8 8 16-10 14-22 2-14-6z" fill="#8a8984" stroke="#1d1d1b" stroke-width="3" stroke-linejoin="round"/><path d="M14 16l14 6 14-10M28 22l2 18" stroke="#5a5955" stroke-width="2.5" fill="none"/></svg>' },
+  { kind: 'glass', size: 70, html: '<svg viewBox="0 0 60 100"><path d="M24 4h12v18c0 4 10 10 10 22v40l-6 6-4-8-6 10-5-9-5 7-4-6V44c0-12 10-18 10-22z" fill="#2f8f3a" stroke="#0e2a12" stroke-width="3" stroke-linejoin="round"/><path d="M28 30c-6 4-8 10-8 18v24" stroke="#bff0c4" stroke-width="3" fill="none" opacity=".6"/><rect x="23" y="2" width="14" height="6" fill="#1d5e26" stroke="#0e2a12" stroke-width="2"/></svg>' },
+  { kind: 'can', size: 56, html: '<svg viewBox="0 0 70 70"><path d="M14 18l20-8 22 6-4 12 6 10-6 12 2 10-22 6-20-8 4-12-6-10 6-10z" fill="#c8cdd2" stroke="#1d1f22" stroke-width="3" stroke-linejoin="round"/><path d="M18 30l16-4 18 4-3 10 3 8-18 4-16-4 3-9z" fill="#e10600" stroke="#1d1f22" stroke-width="2"/><path d="M24 34l8 6M40 30l-4 12" stroke="#fff" stroke-width="2" opacity=".7"/></svg>' },
+];
+const DEBRIS_COLORS = { stone: ['#8a8984', '#5a5955', '#c9c7c0'], glass: ['#2f8f3a', '#bff0c4', '#e8fff0'], can: ['#c8cdd2', '#e10600', '#ffffff'] };
+// fissures dessinées depuis le point d'impact
+function crackSVG() {
+  const cx0 = 40 + Math.random() * 20, cy0 = 40 + Math.random() * 20;
+  let paths = '';
+  const n = 5 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 6.283 + Math.random() * .6;
+    let x = cx0, y = cy0, d = 'M' + x.toFixed(1) + ' ' + y.toFixed(1);
+    const steps = 3 + Math.floor(Math.random() * 3), len = 30 + Math.random() * 30;
+    for (let k = 1; k <= steps; k++) {
+      const aa = a + (Math.random() - .5) * .7;
+      x += Math.cos(aa) * len / steps; y += Math.sin(aa) * len / steps;
+      d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1);
+    }
+    paths += '<path d="' + d + '"/>';
+  }
+  return '<svg class="crack" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+    '<g fill="none" stroke="rgba(255,255,255,.5)" stroke-width="3" stroke-linejoin="round" transform="translate(.8 .8)">' + paths + '</g>' +
+    '<g fill="none" stroke="rgba(20,14,10,.9)" stroke-width="2" stroke-linejoin="round">' + paths + '</g>' +
+    '<circle cx="' + cx0 + '" cy="' + cy0 + '" r="5" fill="rgba(20,14,10,.75)"/></svg>';
+}
+function debrisBurst(x, y, kind) {
+  const fx = $('fx'), cols = DEBRIS_COLORS[kind] || DEBRIS_COLORS.stone;
+  for (let i = 0; i < 16; i++) {
+    const d = document.createElement('div'); d.className = 'debris';
+    const sz = (kind === 'glass' ? 4 : 5) + Math.random() * (kind === 'stone' ? 9 : 7);
+    d.style.cssText = 'width:' + sz + 'px;height:' + (kind === 'glass' ? sz * 1.8 : sz) + 'px;background:' + cols[i % cols.length] +
+      ';clip-path:polygon(50% 0,100% 40%,80% 100%,10% 85%,0 30%)';
+    fx.appendChild(d);
+    const dx = (Math.random() - .5) * 220, up = 40 + Math.random() * 90, down = 60 + Math.random() * 120, rot = (Math.random() - .5) * 720;
+    d.animate([
+      { transform: 'translate(' + x + 'px,' + y + 'px) rotate(0deg)', opacity: 1 },
+      { transform: 'translate(' + (x + dx * .55) + 'px,' + (y - up) + 'px) rotate(' + rot * .5 + 'deg)', opacity: 1, offset: .4 },
+      { transform: 'translate(' + (x + dx) + 'px,' + (y + down) + 'px) rotate(' + rot + 'deg)', opacity: 0 },
+    ], { duration: 700 + Math.random() * 300, easing: 'cubic-bezier(.2,.6,.4,1)' }).onfinish = () => d.remove();
+  }
+}
+function throwAt(cell, delay = 0) {
+  return new Promise(res => setTimeout(() => {
+    const fx = $('fx'), W0 = stage.offsetWidth, H0 = stage.offsetHeight;
+    const t = rel(cell, stage), tx = t.x + t.w / 2, ty = t.y + t.h / 2;
+    const fromLeft = Math.random() < .5;
+    const sx = fromLeft ? -80 : W0 + 80, sy = H0 * (.75 + Math.random() * .2);
+    const p = PROJ[Math.floor(Math.random() * PROJ.length)];
+    const el = document.createElement('div'); el.className = 'proj';
+    el.style.width = p.size + 'px'; el.style.height = p.size + 'px'; el.innerHTML = p.html;
+    fx.appendChild(el);
+    const arc = 240 + Math.random() * 160, spin = (fromLeft ? 1 : -1) * (360 + Math.random() * 540), rot0 = Math.random() * 360;
+    const frames = [];
+    for (let i = 0; i <= 16; i++) {
+      const k = i / 16;
+      const x = sx + (tx - sx) * k, y = sy + (ty - sy) * k - arc * 4 * k * (1 - k);
+      const sc = 1.5 - .5 * k; // il vient de « devant », vers la grille
+      frames.push({ transform: 'translate(' + (x - p.size / 2) + 'px,' + (y - p.size / 2) + 'px) rotate(' + (rot0 + spin * k) + 'deg) scale(' + sc + ')' });
+    }
+    sfx('throw');
+    el.animate(frames, { duration: 620 + Math.random() * 180, easing: 'linear' }).onfinish = () => {
+      el.remove();
+      cell.insertAdjacentHTML('beforeend', crackSVG());
+      cell.classList.remove('hitfx'); void cell.offsetWidth; cell.classList.add('hitfx');
+      debrisBurst(tx, ty, p.kind);
+      sfx(p.kind === 'glass' ? 'glass' : p.kind === 'can' ? 'can' : 'stone');
+      restart(reelsEl, 'thump');
+      res();
+    };
+  }, delay));
+}
+// lance n projectiles sur des cases choisies parmi celles données
+function volley(cells, n) {
+  if (!cells.length || n <= 0) return;
+  const pool = cells.slice().sort(() => Math.random() - .5).slice(0, n);
+  pool.forEach(([r, row], i) => throwAt(cellAt(r, row), i * 170));
+}
+
 async function strikeTrigger(cells) {
+  volley(cells, 2);
   cells.forEach(([r, row], i) => setTimeout(() => {
     const c = cellAt(r, row); c.classList.remove('slam'); void c.offsetWidth; c.classList.add('slam');
     shockwave(c, true); sparks(r, 30, ['#ffd400', '#ff6a00', '#fff3a0', '#e10600']);
@@ -820,6 +914,12 @@ async function showWins(wins, scatterCells, amount, label) {
   if (!hits.size) return;
   for (let r = 0; r < 5; r++) for (let row = 0; row < 3; row++) cellAt(r, row).classList.add(hits.has(r + ':' + row) ? 'hit' : 'dim');
   drawLines(wins);
+  if (amount > 0) {
+    const x = amount / bet();
+    const n = x >= 25 ? 4 : x >= 10 ? 3 : x >= 4 ? 2 : (x >= 1.5 && Math.random() < .35 ? 1 : 0);
+    const winCells = []; hits.forEach(k => { const [r, row] = k.split(':').map(Number); winCells.push([r, row]); });
+    volley(winCells, state.turbo ? Math.min(n, 1) : n);
+  }
   if (amount > 0) {
     const st = $('stamp'); st.textContent = (label ? label + ' ' : '+') + fmt(amount); st.classList.add('show');
     sfx('win', amount / bet());

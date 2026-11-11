@@ -598,6 +598,20 @@
         if (Math.random() < .25) ooh(t); break;
       case 'barricade':
         clang(t, .28); tom(t, .32); hey(t + .1, .11); break;
+      case 'throw': // projectile qui fend l'air
+        burst('pink', t, .22, { filter: 'bandpass', freq: 700, sweepTo: 2600, q: 2, vol: .14, a: .08, rev: .1, pan: R(-.6, .6) }); break;
+      case 'stone': // pavé qui s'écrase : choc sourd + craquement
+        burst('brown', t, .16, { freq: 320, vol: .6, rev: .15 });
+        osc('sine', 95, t, .22, { vol: .28, to: 42, rev: .1 });
+        burst('white', t, .07, { filter: 'bandpass', freq: 1700, q: 1, vol: .16, rev: .2 }); break;
+      case 'glass': // bouteille qui éclate : fracas + éclats (bruit, pas de notes)
+        burst('white', t, .22, { filter: 'highpass', freq: 2800, vol: .22, rev: .3 });
+        for (let i = 0; i < 6; i++) burst('white', t + R(.02, .28), .03, { filter: 'bandpass', freq: R(3500, 7500), q: 4, vol: .05, rev: .3, pan: R(-.5, .5) });
+        break;
+      case 'can': // canette écrasée
+        burst('white', t, .12, { filter: 'bandpass', freq: 1300, q: 3, vol: .2, rev: .2 });
+        for (let i = 0; i < 3; i++) burst('white', t + R(.03, .15), .03, { filter: 'bandpass', freq: R(2000, 3500), q: 3, vol: .06 });
+        break;
       case 'euro':
         ching(t, .11); osc('sine', 1568, t, .12, { vol: .06 }); osc('sine', 2093, t + .09, .3, { vol: .07 });
         hey(t + .05, .08); break;
