@@ -364,11 +364,12 @@ body.strike #stage.portrait #side .promo { display: none; }
 #stage.portrait #buy { left: auto; right: 34px; top: 1094px; }
 
 /* ---------- Bandeau défilant ---------- */
+/* collé tout en bas de l'écran (hors de la scène), à la même échelle que le jeu */
 #ticker {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; overflow: hidden;
-  background: var(--yellow); color: var(--black); border-top: 3px solid var(--black);
-  font-family: var(--display); text-transform: uppercase; font-size: 17px; white-space: nowrap;
-  height: 34px; display: flex; align-items: center;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; overflow: hidden;
+  background: var(--yellow); color: var(--black); border-top: calc(3px * var(--k, 1)) solid var(--black);
+  font-family: var(--display); text-transform: uppercase; font-size: calc(17px * var(--k, 1)); white-space: nowrap;
+  height: calc(34px * var(--k, 1)); display: flex; align-items: center;
 }
 #ticker .track { display: inline-block; padding-left: 100%; animation: crawl 60s linear infinite; }
 #ticker .up { color: var(--red); }
@@ -482,6 +483,7 @@ body.strike #stage.portrait #side .promo { display: none; }
   <div class="gyro red"></div>
 </div>
 <div id="flash" aria-hidden="true"></div>
+<div id="ticker" aria-hidden="true"><div class="track" id="tickerTrack"></div></div>
 
 <!-- ===================== LE JEU ===================== -->
 <div id="stage">
@@ -538,8 +540,6 @@ body.strike #stage.portrait #side .promo { display: none; }
   </div>
 
   <button id="buy" aria-label="Buy the General Strike feature"></button>
-
-  <div id="ticker" aria-hidden="true"><div class="track" id="tickerTrack"></div></div>
 
   <!-- Gros gain -->
   <div class="overlay" id="bigwin"><div class="poster red">
@@ -641,6 +641,7 @@ function fit() {
   const W0 = portrait ? 720 : 1280, H0 = portrait ? 1280 : 720;
   scale = Math.min(innerWidth / W0, innerHeight / H0);
   stage.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  document.documentElement.style.setProperty('--k', Math.max(scale, .55)); // taille du bandeau défilant
   if (reels.length) reels.forEach(layoutStrip);
 }
 // position d'un élément relative à un autre, en pixels de la scène (avant mise à l'échelle)
