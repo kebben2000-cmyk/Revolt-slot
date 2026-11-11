@@ -1,4 +1,4 @@
-/* LA RUE GRONDE — moteur mathématique (prototype)
+/* REVOLT — moteur mathématique (prototype)
  * 5 rouleaux × 3 rangées, 20 lignes fixes.
  * Tous les gains sont exprimés en multiples de la MISE TOTALE.
  * Le même fichier tourne dans le navigateur et dans Node (sim.js).
@@ -21,17 +21,21 @@
     { key: 'fumigene',     name: 'Fumigène',              pays: [0, 0, 0, 20, 75, 300] },
     { key: 'poubelle',     name: 'Poubelle en feu',       pays: [0, 0, 0, 30, 100, 400] },
     { key: 'crs',          name: 'CRS',                   pays: [0, 0, 0, 40, 150, 750] },
-    { key: 'wild',         name: 'WILD — Pancarte RÉVOLTE', pays: [0, 0, 0, 50, 200, 1500] },
+    { key: 'wild',         name: 'WILD — Mégaphone',      pays: [0, 0, 0, 50, 200, 1500] },
     { key: 'scatter',      name: 'SCATTER — Barricade',   pays: [0, 0, 0, 0, 0, 0] },
+    { key: 'euro',         name: 'Euro doré',             pays: [0, 0, 0, 0, 0, 0] },
   ];
-  const WILD = 8, SCATTER = 9;
+  const WILD = 8, SCATTER = 9, EURO = 10;
+
+  // Euro doré (General Strike uniquement) : chaque euro ajoute sa valeur au multiplicateur
+  const EURO_VALUES = [[1, 70], [2, 22], [3, 7], [5, 1]]; // [valeur, poids]
 
   // Scatter : gain (× mise totale) et nombre de tours gratuits
-  const SCATTER_PAY = { 3: 2, 4: 6, 5: 25 };
+  const SCATTER_PAY = { 3: 1, 4: 5, 5: 20 };
   const SCATTER_SPINS = { 3: 10, 4: 12, 5: 15 };
   const RETRIGGER_SPINS = 5;
   const MAX_WIN = 5000;      // plafond, en × mise
-  const BONUS_BUY_COST = 66; // prix de l'achat du bonus, en × mise
+  const BONUS_BUY_COST = 67; // prix de l'achat du bonus, en × mise
 
   const PAYLINES = [
     [1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],
@@ -41,21 +45,21 @@
   ];
 
   // Poids des symboles par rouleau. Ordre : les 10 symboles ci-dessus.
-  //            bid port tick gil pav fum pou crs wild scat
+  //            bid port tick gil pav fum pou crs wild scat euro
   const W_BASE = [
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  2 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  2 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  2 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  2 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  2 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  2,  0 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  2,  0 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  2,  0 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  2,  0 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  2,  0 ],
   ];
-  // Pendant l'Insurrection : wilds un peu plus fréquents, ils s'étendent (barricade)
+  // Pendant le General Strike : les mégaphones s'étendent, les euros dorés apparaissent
   const W_FREE = [
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  5,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  5,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  5,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  1 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  1,  1 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  1,  1 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  1,  1 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  1,  1 ],
+    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  1,  1 ],
   ];
 
   // Construit des bandes de rouleaux fixes (déterministes) à partir des poids,
@@ -75,7 +79,7 @@
         let moved = false;
         for (let i = 0; i < strip.length; i++) {
           const a = strip[i], b = strip[(i + 1) % strip.length];
-          if ((a === SCATTER || a === WILD) && a === b) {
+          if ((a === SCATTER || a === WILD || a === EURO) && a === b) {
             const k = (i + 2 + Math.floor(rnd() * (strip.length - 3))) % strip.length;
             [strip[(i + 1) % strip.length], strip[k]] = [strip[k], strip[(i + 1) % strip.length]];
             moved = true;
@@ -114,7 +118,7 @@
     return n;
   }
 
-  // Barricade : en Insurrection, chaque wild recouvre tout son rouleau
+  // Mégaphone : pendant le General Strike, chaque wild recouvre tout son rouleau
   function expandWilds(grid) {
     const expanded = [];
     const g = grid.map((col, r) => {
@@ -135,7 +139,7 @@
       while (wildRun < 5 && syms[wildRun] === WILD) wildRun++;
       const target = syms.find((s) => s !== WILD);
       let best = { sym: WILD, count: wildRun, pay: SYMBOLS[WILD].pays[wildRun] || 0 };
-      if (target !== undefined && target !== SCATTER) {
+      if (target !== undefined && target !== SCATTER && target !== EURO) {
         let c = 0;
         while (c < 5 && (syms[c] === target || syms[c] === WILD)) c++;
         const p = SYMBOLS[target].pays[c] || 0;
@@ -148,6 +152,13 @@
       }
     });
     return { wins, total: total / LINES };
+  }
+
+  function pickEuro(rng) {
+    const tot = EURO_VALUES.reduce((a, [, w]) => a + w, 0);
+    let x = rng() * tot;
+    for (const [v, w] of EURO_VALUES) { if ((x -= w) < 0) return v; }
+    return 1;
   }
 
   function scatterCells(grid) {
@@ -180,7 +191,7 @@
     if (scN >= 3) {
       bonus = { spinsAwarded: SCATTER_SPINS[scKey], spins: [], win: 0 };
       let left = bonus.spinsAwarded;
-      let mult = 1; // compteur d'INFLATION
+      let mult = 1; // multiplicateur (inflation + euros dorés)
       while (left > 0) {
         left--;
         const raw = drawGrid(STRIPS_FREE, rng, false);
@@ -189,11 +200,16 @@
         const sN = countScatters(raw);
         const retrig = sN >= 3 ? RETRIGGER_SPINS : 0;
         left += retrig;
+        // euros dorés : leur valeur s'ajoute au multiplicateur avant le calcul des gains
+        const euros = [];
+        raw.forEach((col, r) => col.forEach((sym, row) => {
+          if (sym === EURO) { const v = pickEuro(rng); euros.push([r, row, v]); mult += v; }
+        }));
         const usedMult = mult;
         const win = ev.total * usedMult;
         if (ev.total > 0) mult += 1; // chaque tour gagnant fait grimper l'inflation
         bonus.spins.push({ raw, grid: g, expanded, wins: ev.wins, baseWin: ev.total,
-          mult: usedMult, nextMult: mult, win, retrigger: retrig,
+          euros, mult: usedMult, nextMult: mult, win, retrigger: retrig,
           scatterCells: scatterCells(raw), left });
         bonus.win += win;
         if (totalWin + bonus.win >= MAX_WIN) { bonus.capped = true; break; }
@@ -205,7 +221,7 @@
     return { mode, cost: buy ? BONUS_BUY_COST : 1, totalWin, capped, base, bonus };
   }
 
-  const api = { SYMBOLS, PAYLINES, LINES, WILD, SCATTER, SCATTER_PAY, SCATTER_SPINS,
+  const api = { SYMBOLS, PAYLINES, LINES, WILD, SCATTER, EURO, EURO_VALUES, SCATTER_PAY, SCATTER_SPINS,
     RETRIGGER_SPINS, MAX_WIN, BONUS_BUY_COST, STRIPS_BASE, STRIPS_FREE, playRound };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RueMath = api;

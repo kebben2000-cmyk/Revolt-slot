@@ -139,6 +139,24 @@ body.insurrection #fsbar { display: flex; }
 .strip.blur .cell img { filter: blur(1.5px); }
 .cell.k-wild { background: var(--red); }
 .cell.k-scatter { background: var(--yellow); }
+.cell.k-euro { background: radial-gradient(circle at 50% 45%, #4a3500, #121212 75%); }
+.euro-val {
+  position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); z-index: 3;
+  font-family: var(--display); font-size: clamp(16px, 3.4vw, 26px); line-height: 1;
+  background: var(--black); color: var(--yellow); padding: 2px 8px 4px; border: 2px solid var(--yellow);
+  animation: euroIn .5s cubic-bezier(.3,1.8,.5,1);
+}
+@keyframes euroIn { from { transform: translateX(-50%) scale(0) rotate(-20deg); } }
+.euro-fly {
+  position: fixed; z-index: 30; pointer-events: none; font-family: var(--display); font-size: 28px;
+  color: var(--yellow); text-shadow: 0 0 10px rgba(255,212,0,.9), 2px 2px 0 #000;
+  transition: transform .7s cubic-bezier(.5,0,.3,1), opacity .7s;
+}
+#reels.quake { animation: quake .5s; }
+@keyframes quake {
+  10%, 50%, 90% { transform: translate(-6px, 3px) rotate(-.6deg); }
+  30%, 70% { transform: translate(6px, -3px) rotate(.6deg); }
+}
 .cell.k-crs, .cell.k-poubelle { background: radial-gradient(circle at 50% 30%, #fff6e4, var(--paper) 70%); }
 .strip.blur .cell svg { filter: blur(1.5px); }
 .cell.hit { animation: hit .9s ease-in-out infinite; z-index: 2; }
@@ -339,6 +357,9 @@ body.insurrection #fsbar { display: flex; }
     <pattern id="hazard" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <rect width="14" height="14" fill="#ffd400"/><rect width="7" height="14" fill="#121212"/>
     </pattern>
+    <radialGradient id="gold" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#ffd400"/><stop offset="1" stop-color="#b87800"/>
+    </radialGradient>
     <radialGradient id="flame" cx="50%" cy="80%" r="70%">
       <stop offset="0" stop-color="#fff3a0"/><stop offset=".35" stop-color="#ffd400"/>
       <stop offset=".7" stop-color="#ff6a00"/><stop offset="1" stop-color="#e10600"/>
@@ -442,14 +463,24 @@ body.insurrection #fsbar { display: flex; }
     <path d="M10 22l6 4M90 22l-6 4M50 6v6" stroke="#2f6bff" stroke-width="4" stroke-linecap="round"/>
   </symbol>
 
-  <!-- WILD : pancarte RÉVOLTE -->
+  <!-- WILD : le mégaphone (provisoire) -->
   <symbol id="s-wild" viewBox="0 0 100 100">
-    <rect x="46" y="54" width="8" height="44" fill="#121212"/>
-    <path d="M8 14l84-6 2 48-86 4z" fill="#ece4d3" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <text x="50" y="44" text-anchor="middle" font-family="'Permanent Marker', cursive" font-size="21" fill="#121212" transform="rotate(-3 50 36)">RÉVOLTE</text>
-    <path d="M14 50c20 3 50 0 72-4" stroke="#e10600" stroke-width="3" fill="none"/>
-    <rect x="30" y="70" width="40" height="16" fill="#121212" transform="rotate(-4 50 78)"/>
-    <text x="50" y="83" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="13" letter-spacing="2" fill="#ffd400" transform="rotate(-4 50 78)">WILD</text>
+    <path d="M76 30q9 20 0 40M85 21q14 29 0 58" fill="none" stroke="#ffd400" stroke-width="5" stroke-linecap="round"/>
+    <path d="M30 38L68 16v66L30 60z" fill="#ece4d3" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M36 42l26-15M36 56l26 15" stroke="#e10600" stroke-width="4"/>
+    <rect x="62" y="13" width="11" height="72" rx="3" fill="#ffd400" stroke="#121212" stroke-width="4"/>
+    <rect x="15" y="37" width="17" height="25" rx="3" fill="#121212"/>
+    <path d="M25 60l-5 17h9l5-17z" fill="#121212"/>
+    <rect x="8" y="80" width="46" height="16" fill="#121212" transform="rotate(-4 31 88)"/>
+    <text x="31" y="93" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="13" letter-spacing="2" fill="#ffd400" transform="rotate(-4 31 88)">WILD</text>
+  </symbol>
+
+  <!-- MULTIPLICATEUR : l'euro doré (General Strike) -->
+  <symbol id="s-euro" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="40" fill="url(#gold)" stroke="#121212" stroke-width="4"/>
+    <circle cx="50" cy="50" r="31" fill="none" stroke="#8a5a00" stroke-width="3" stroke-dasharray="3 4"/>
+    <text x="50" y="66" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="44" fill="#6b4300">€</text>
+    <path d="M80 14l3 8 8 3-8 3-3 8-3-8-8-3 8-3zM16 70l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff6c2"/>
   </symbol>
 
   <!-- SCATTER : barricade enflammée -->
@@ -480,9 +511,9 @@ body.insurrection #fsbar { display: flex; }
   </header>
 
   <div id="fsbar" aria-live="polite">
-    <div class="fs-title">Insurrection</div>
+    <div class="fs-title">General Strike</div>
     <div class="fs-left"><span id="fsLeft">10</span><small>tours restants</small></div>
-    <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>inflation</small></div>
+    <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>multiplicateur</small></div>
     <div class="fs-left"><span id="fsWin">0,00 €</span><small>gains du bonus</small></div>
   </div>
 
@@ -517,10 +548,10 @@ body.insurrection #fsbar { display: flex; }
   </div>
 
   <div id="tools">
-    <button class="tool" id="buy">Acheter l'Insurrection · <span id="buyPrice">66,00 €</span></button>
+    <button class="tool" id="buy">Acheter le General Strike · <span id="buyPrice">67,00 €</span></button>
     <button class="tool" id="auto" aria-pressed="false">Auto ×10</button>
     <button class="tool" id="turbo" aria-pressed="false">Turbo</button>
-    <button class="tool" id="sound" aria-pressed="false">Son</button>
+    <button class="tool" id="sound" aria-pressed="true">Son : on</button>
     <button class="tool" id="info">Règles & gains</button>
   </div>
 </div>
@@ -537,9 +568,9 @@ body.insurrection #fsbar { display: flex; }
 
 <!-- Écran déclenchement / fin de bonus -->
 <div class="overlay" id="bonusScreen"><div class="poster">
-  <h2 id="bsTitle">Insurrection</h2>
+  <h2 id="bsTitle">General Strike</h2>
   <div class="big" id="bsBig">10 tours gratuits</div>
-  <p id="bsText">Les barricades montent. Chaque wild recouvre tout son rouleau. Chaque tour gagnant fait grimper l'inflation, et le multiplicateur ne redescend jamais.</p>
+  <p id="bsText"></p>
   <button class="cta" id="bsGo">Descendre dans la rue</button>
 </div></div>
 
@@ -550,21 +581,22 @@ body.insurrection #fsbar { display: flex; }
   <p>5 rouleaux, 3 rangées, 20 lignes fixes. Les gains se lisent de gauche à droite, à partir du premier rouleau. Seul le meilleur gain de chaque ligne est payé. Montants calculés pour la mise actuelle.</p>
   <h3>Les symboles</h3>
   <div class="paytable" id="paytable"></div>
-  <h3>Pancarte RÉVOLTE (wild)</h3>
-  <ul><li>Apparaît sur les rouleaux 2, 3 et 4 et remplace tous les symboles sauf la barricade.</li></ul>
+  <h3>Le mégaphone (wild)</h3>
+  <ul><li>Apparaît sur les rouleaux 2, 3 et 4 et remplace tous les symboles sauf la barricade et l'euro doré. Quand il tombe, il lance un slogan et fait trembler les rouleaux.</li></ul>
   <h3>Barricade (scatter)</h3>
   <ul>
-    <li>Paie n'importe où : 3 = 2×, 4 = 6×, 5 = 25× la mise.</li>
-    <li>3, 4 ou 5 barricades déclenchent l'Insurrection avec 10, 12 ou 15 tours gratuits.</li>
+    <li>Paie n'importe où : 3 = 1×, 4 = 5×, 5 = 20× la mise.</li>
+    <li>3, 4 ou 5 barricades déclenchent le General Strike avec 10, 12 ou 15 tours gratuits.</li>
   </ul>
-  <h3>Insurrection (tours gratuits)</h3>
+  <h3>General Strike (tours gratuits)</h3>
   <ul>
-    <li><b>Barricade</b> : chaque pancarte RÉVOLTE qui tombe recouvre tout son rouleau.</li>
-    <li><b>Inflation</b> : le multiplicateur démarre à ×1 et gagne +1 après chaque tour gagnant. Il ne redescend jamais.</li>
+    <li><b>Mégaphone géant</b> : chaque mégaphone qui tombe recouvre tout son rouleau.</li>
+    <li><b>Euro doré</b> : n'apparaît que pendant le bonus. Chaque euro ajoute +1, +2, +3 ou +5 au multiplicateur, avant le calcul des gains du tour.</li>
+    <li><b>Inflation</b> : le multiplicateur démarre à ×1 et gagne aussi +1 après chaque tour gagnant. Il ne redescend jamais.</li>
     <li>3 barricades ou plus pendant le bonus : +5 tours.</li>
   </ul>
   <h3>Achat du bonus</h3>
-  <ul><li>Déclenche directement l'Insurrection pour 66× la mise.</li></ul>
+  <ul><li>Déclenche directement le General Strike pour 67× la mise.</li></ul>
   <h3>Chiffres</h3>
   <ul>
     <li>RTP théorique : environ 96 % (simulation sur 2 millions de parties, prototype non certifié).</li>
@@ -574,6 +606,7 @@ body.insurrection #fsbar { display: flex; }
 </div></div>
 
 <script src="math.js"></script>
+<script src="sound.js"></script>
 <script>
 (() => {
 'use strict';
@@ -582,37 +615,21 @@ const KEYS = M.SYMBOLS.map(s => s.key);
 const BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: false };
+const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true };
 const $ = id => document.getElementById(id);
 const fmt = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const bet = () => BETS[state.betIdx];
 const wait = ms => new Promise(r => setTimeout(r, state.turbo ? ms * 0.45 : ms));
 
-/* ---------------- Son (synthétisé, aucun fichier) ---------------- */
-let ac = null;
-function audio() {
-  if (!state.sound) return null;
-  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
-  return ac;
-}
-function tone(freq, dur, type = 'square', vol = .08, slideTo) {
-  const a = audio(); if (!a) return;
-  const o = a.createOscillator(), g = a.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, a.currentTime);
-  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, a.currentTime + dur);
-  g.gain.setValueAtTime(vol, a.currentTime); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + dur);
-  o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + dur);
-}
-function thud() {
-  const a = audio(); if (!a) return;
-  const len = a.sampleRate * .12, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
-  f.type = 'lowpass'; f.frequency.value = 500; g.gain.value = .5;
-  s.buffer = buf; s.connect(f).connect(g).connect(a.destination); s.start();
-}
-function siren() { for (let i = 0; i < 3; i++) setTimeout(() => tone(650, .45, 'sawtooth', .04, 950), i * 450); }
-function chime(n = 3) { for (let i = 0; i < n; i++) setTimeout(() => tone(520 + i * 130, .18, 'triangle', .07), i * 90); }
+/* ---------------- Son : ambiance de manif (voir sound.js) ---------------- */
+const S = window.RueSound;
+const sfx = (name, v) => { if (state.sound) S.play(name, v); };
+// Le navigateur n'autorise le son qu'après un premier geste : l'ambiance démarre au premier clic ou touche.
+const armSound = () => {
+  removeEventListener('pointerdown', armSound); removeEventListener('keydown', armSound);
+  if (state.sound) S.enable(true);
+};
+addEventListener('pointerdown', armSound); addEventListener('keydown', armSound);
 
 /* ---------------- Grille ---------------- */
 const reelsEl = $('reels');
@@ -668,21 +685,12 @@ function clearMarks() {
 /* ---- effets ---- */
 function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 const SHOUTS = ['On lâche rien !', 'Tout augmente !', 'Dans la rue !', 'Ça va péter !', 'Révolte !', 'Le plein à 112 € ?!'];
-function whoosh() {
-  const a = audio(); if (!a) return;
-  const len = a.sampleRate * .35, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / len);
-  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
-  f.type = 'bandpass'; f.Q.value = 2; f.frequency.setValueAtTime(300, a.currentTime);
-  f.frequency.exponentialRampToValueAtTime(2400, a.currentTime + .35); g.gain.value = .35;
-  s.buffer = buf; s.connect(f).connect(g).connect(a.destination); s.start();
-}
 function kick(fast) {
   restart($('spin'), 'go');
+  sfx('spin');
   if (fast) return;
   restart($('machine'), 'shake');
   restart($('flash'), 'go');
-  whoosh();
   if (Math.random() < .35) { const s = $('shout'); s.textContent = SHOUTS[Math.floor(Math.random() * SHOUTS.length)]; restart(s, 'go'); }
 }
 function sparks(r, n, colors) {
@@ -695,10 +703,18 @@ function sparks(r, n, colors) {
     $('machine').appendChild(p); setTimeout(() => p.remove(), 700);
   }
 }
+const MEGA = ['On lâche rien !', 'Tous ensemble !', 'Grève générale !', 'Le plein à 112 € ?!', 'Ça va péter !', 'Révolte !', 'Rendez l\'argent !'];
+let megaThisSpin = false;
+function megaphone() {
+  if (megaThisSpin) return; megaThisSpin = true;
+  const s = $('shout'); s.textContent = MEGA[Math.floor(Math.random() * MEGA.length)]; restart(s, 'go');
+  if (!reduceMotion) { restart($('machine'), 'shake'); restart(reelsEl, 'quake'); }
+}
 function land(r, col, fast) {
-  thud();
+  sfx('stop');
   const R = reels[r];
   R.reel.classList.remove('spinning', 'tease');
+  if (col.includes(M.WILD)) megaphone(); // même en turbo : slogan + rouleaux qui tremblent
   if (fast) return;
   restart(R.reel, 'land'); setTimeout(() => R.reel.classList.remove('land'), 320);
   restart(reelsEl, 'thump');
@@ -707,13 +723,14 @@ function land(r, col, fast) {
     if (s === M.SCATTER || s === M.WILD) {
       cellAt(r, row).classList.add('pop');
       sparks(r, 10, s === M.SCATTER ? ['#ffd400', '#e10600'] : ['#e10600', '#ece4d3']);
-      tone(s === M.SCATTER ? 880 : 660, .2, 'square', .05, s === M.SCATTER ? 1320 : 990);
+      sfx(s === M.SCATTER ? 'scatter' : 'wild');
     }
   });
 }
 
 function spinTo(grid, strips) {
   clearMarks();
+  megaThisSpin = false;
   // Les rouleaux tournent toujours (c'est le jeu) ; « animations réduites » coupe seulement secousses et flashs.
   const h = cellH(), fast = state.turbo;
   kick(fast || reduceMotion);
@@ -736,7 +753,7 @@ function spinTo(grid, strips) {
       R.strip.style.transform = 'translateY(0)';
       R.strip.classList.add('blur');
       if (!fast) R.reel.classList.add('spinning');
-      if (tease) setTimeout(() => { R.reel.classList.add('tease'); tone(440, .9, 'sawtooth', .03, 880); }, dur - 1250);
+      if (tease) setTimeout(() => { R.reel.classList.add('tease'); sfx('tease'); }, dur - 1250);
       const frames = fast
         ? [{ transform: `translateY(${start}px)` }, { transform: 'translateY(0)' }]
         : [
@@ -777,7 +794,7 @@ async function showWins(wins, scatterCells, amount, label) {
   drawLines(wins);
   if (amount > 0) {
     const st = $('stamp'); st.textContent = (label ? label + ' ' : '+') + fmt(amount); st.classList.add('show');
-    chime(Math.min(6, 2 + Math.floor(amount / bet())));
+    sfx('win', amount / bet());
   }
   await wait(1300);
 }
@@ -788,9 +805,20 @@ function describeWins(wins) {
   return `${best.count} × ${M.SYMBOLS[best.sym].name}` + (wins.length > 1 ? ` et ${wins.length - 1} autre${wins.length > 2 ? 's' : ''} ligne${wins.length > 2 ? 's' : ''}` : '');
 }
 
+function flyToMeter(fromEl, text) {
+  const a = fromEl.getBoundingClientRect(), b = $('fsInflBox').getBoundingClientRect();
+  const f = document.createElement('div'); f.className = 'euro-fly'; f.textContent = text;
+  f.style.left = (a.left + a.width / 2 - 16) + 'px'; f.style.top = (a.top + a.height / 2 - 16) + 'px';
+  document.body.appendChild(f);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    f.style.transform = 'translate(' + (b.left + b.width / 2 - a.left - a.width / 2) + 'px,' + (b.top + b.height / 2 - a.top - a.height / 2) + 'px) scale(1.4)';
+    f.style.opacity = '.2';
+  }));
+  setTimeout(() => f.remove(), 800);
+}
 function showBanner(r) {
   const b = document.createElement('div'); b.className = 'barricade-banner';
-  b.innerHTML = '<span>Barricade</span>';
+  b.innerHTML = '<span>Mégaphone</span>';
   reels[r].reel.appendChild(b);
 }
 
@@ -817,7 +845,7 @@ async function bigWin(x, amount) {
   else if (x >= 30) { title = 'Émeute !'; sub = 'La rue a parlé.'; }
   else if (x >= 10) { title = 'Ça chauffe !'; sub = 'Les poubelles flambent.'; }
   if (!title) return;
-  siren();
+  sfx('bigwin', x);
   await overlay('bigwin', () => { $('bwTitle').textContent = title; $('bwSub').textContent = sub; $('bwAmount').textContent = fmt(0); countUp($('bwAmount'), amount, 1400); });
 }
 
@@ -837,7 +865,7 @@ async function play(mode) {
   const cost = mode === 'buy' ? bet() * M.BONUS_BUY_COST : bet();
   if (state.balance < cost) { msg('Solde insuffisant. <b>Baisse la mise</b> ou recharge la page pour repartir à 1 000 €.'); state.auto = 0; syncAuto(); return; }
   state.busy = true; state.balance -= cost; $('win').textContent = fmt(0); render();
-  msg(mode === 'buy' ? 'Tu as acheté l\'Insurrection. <b>Les barricades arrivent.</b>' : 'Les rouleaux tournent…');
+  msg(mode === 'buy' ? 'Tu as acheté le General Strike. <b>Les barricades arrivent.</b>' : 'Les rouleaux tournent…');
 
   const round = M.playRound(mode);
   const b = bet();
@@ -847,6 +875,7 @@ async function play(mode) {
     msg(round.base.scatters >= 3 ? `<b>${round.base.scatters} barricades !</b> ` + describeWins(round.base.wins) : describeWins(round.base.wins));
     await showWins(round.base.wins, round.base.scatters >= 3 ? round.base.scatterCells : [], baseAmt);
   } else {
+    sfx('lose');
     msg(['Rien. Comme ta fiche de paie.', 'Le prix du plein, lui, a encore bougé.', 'Rien cette fois. On lâche rien.', 'Les rouleaux restent calmes. Pour l\'instant.'][Math.floor(Math.random() * 4)]);
   }
   let shown = baseAmt;
@@ -854,11 +883,11 @@ async function play(mode) {
 
   if (round.bonus) {
     const B = round.bonus;
-    siren();
+    sfx('bonus');
     await overlay('bonusScreen', () => {
-      $('bsTitle').textContent = 'Insurrection';
+      $('bsTitle').textContent = 'General Strike';
       $('bsBig').textContent = `${B.spinsAwarded} tours gratuits`;
-      $('bsText').textContent = 'Les barricades montent. Chaque wild recouvre tout son rouleau. Chaque tour gagnant fait grimper l\'inflation, et le multiplicateur ne redescend jamais.';
+      $('bsText').textContent = 'Tout le pays s\'arrête. Les mégaphones recouvrent leur rouleau, les euros dorés gonflent le multiplicateur, et il ne redescend jamais.';
       $('bsGo').textContent = 'Descendre dans la rue';
     });
     document.body.classList.add('insurrection'); smokeBoost = 1;
@@ -869,34 +898,48 @@ async function play(mode) {
       $('fsLeft').textContent = s.left + 1;
       await spinTo(s.raw, M.STRIPS_FREE);
       $('fsLeft').textContent = s.left;
+      if (s.euros.length) {
+        for (const [r, row, v] of s.euros) {
+          const c = cellAt(r, row), tag = document.createElement('b');
+          tag.className = 'euro-val'; tag.textContent = '+' + v; c.appendChild(tag); c.classList.add('pop');
+          sfx('euro'); sparks(r, 12, ['#ffd400', '#fff6c2', '#b87800']);
+          flyToMeter(c, '+' + v);
+          await wait(420);
+        }
+        $('fsInfl').textContent = '×' + s.mult;
+        const box = $('fsInflBox'); box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
+        msg('<b>Euro doré !</b> Le multiplicateur passe à ×' + s.mult + '.');
+        await wait(450);
+      }
       if (s.expanded.length) {
         await wait(200);
-        for (const r of s.expanded) { setReel(r, [M.WILD, M.WILD, M.WILD]); showBanner(r); thud(); await wait(260); }
-        msg('<b>Barricade !</b> La pancarte recouvre tout le rouleau.');
+        for (const r of s.expanded) { setReel(r, [M.WILD, M.WILD, M.WILD]); showBanner(r); sfx('barricade'); await wait(260); }
+        msg('<b>Mégaphone géant !</b> Il recouvre tout le rouleau.');
         await wait(500);
       }
       if (s.win > 0) {
-        msg(describeWins(s.wins) + (s.mult > 1 ? ` · <b>×${s.mult} inflation</b>` : ''));
+        msg(describeWins(s.wins) + (s.mult > 1 ? ` · <b>×${s.mult}</b>` : ''));
         await showWins(s.wins, [], s.win * b, s.mult > 1 ? '×' + s.mult : '');
         bonusTotal += s.win * b; shown += s.win * b;
         $('fsWin').textContent = fmt(bonusTotal); $('win').textContent = fmt(shown);
         $('fsInfl').textContent = '×' + s.nextMult;
         const box = $('fsInflBox'); box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
-        tone(300, .3, 'sawtooth', .05, 600);
+        sfx('inflation');
       } else {
-        msg('Tour à vide. L\'inflation tient bon à <b>×' + s.mult + '</b>.');
+        msg('Tour à vide. Le multiplicateur tient bon à <b>×' + s.mult + '</b>.');
         await wait(350);
       }
       if (s.retrigger) {
-        siren(); msg(`<b>+${s.retrigger} tours !</b> D'autres barricades se dressent.`);
+        sfx('retrigger'); msg(`<b>+${s.retrigger} tours !</b> D'autres barricades se dressent.`);
         await showWins([], s.scatterCells, 0); await wait(300);
       }
     }
     clearMarks();
+    sfx('bonusEnd');
     await overlay('bonusScreen', () => {
-      $('bsTitle').textContent = 'Fin de l\'insurrection';
+      $('bsTitle').textContent = 'Fin de la grève';
       $('bsBig').textContent = fmt(round.totalWin * b - baseAmt);
-      $('bsText').textContent = round.capped ? 'Gain maximum atteint : 5 000× la mise.' : `Inflation finale : ×${B.spins[B.spins.length - 1].nextMult}.`;
+      $('bsText').textContent = round.capped ? 'Gain maximum atteint : 5 000× la mise.' : `Multiplicateur final : ×${B.spins[B.spins.length - 1].nextMult}.`;
       $('bsGo').textContent = 'Rentrer';
     });
     document.body.classList.remove('insurrection'); smokeBoost = 0;
@@ -929,7 +972,12 @@ $('auto').addEventListener('click', () => {
   state.auto = 10; syncAuto(); if (!state.busy) play('base');
 });
 $('turbo').addEventListener('click', e => { state.turbo = !state.turbo; e.currentTarget.setAttribute('aria-pressed', state.turbo); });
-$('sound').addEventListener('click', e => { state.sound = !state.sound; e.currentTarget.setAttribute('aria-pressed', state.sound); if (state.sound) { audio(); chime(2); } });
+$('sound').addEventListener('click', e => {
+  state.sound = !state.sound;
+  e.currentTarget.setAttribute('aria-pressed', state.sound);
+  e.currentTarget.textContent = state.sound ? 'Son : on' : 'Son : off';
+  S.enable(state.sound);
+});
 $('info').addEventListener('click', () => { buildPaytable(); $('rules').classList.add('show'); $('rulesClose').focus(); });
 $('rulesClose').addEventListener('click', () => $('rules').classList.remove('show'));
 document.addEventListener('keydown', e => {
@@ -941,7 +989,7 @@ function buildPaytable() {
   const lb = bet() / M.LINES;
   $('paytable').innerHTML = M.SYMBOLS.slice(0, 9).map((s, i) => `
     <div class="pt">${symArt(i, false)}
-    <div><b>${i === M.WILD ? 'Pancarte (wild)' : s.name}</b>5 : ${fmt(s.pays[5] * lb)}<br>4 : ${fmt(s.pays[4] * lb)}<br>3 : ${fmt(s.pays[3] * lb)}</div></div>`).reverse().join('');
+    <div><b>${i === M.WILD ? 'Mégaphone (wild)' : s.name}</b>5 : ${fmt(s.pays[5] * lb)}<br>4 : ${fmt(s.pays[4] * lb)}<br>3 : ${fmt(s.pays[3] * lb)}</div></div>`).reverse().join('');
 }
 
 /* ---------------- Bandeau d'info ---------------- */
@@ -959,17 +1007,70 @@ const cv = $('smoke'), cx = cv.getContext('2d');
 let W = 0, H = 0; const puffs = [], embers = [];
 function size() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
 size(); addEventListener('resize', size);
-for (let i = 0; i < 26; i++) puffs.push({ x: Math.random() * W, y: Math.random() * H, r: 80 + Math.random() * 160, v: .15 + Math.random() * .35, a: .04 + Math.random() * .06, d: Math.random() * 2 - 1 });
 for (let i = 0; i < 70; i++) embers.push({ x: Math.random() * W, y: Math.random() * H, v: .4 + Math.random() * 1.4, s: 1 + Math.random() * 2.2, p: Math.random() * 6 });
+
+// La fumée du décor prend vie : des panaches partent des feux de l'image de fond.
+// Coordonnées en pixels de l'image d'origine (1375 × 768), recalées comme le « cover » du CSS.
+const IMG_W = 1375, IMG_H = 768;
+const EMITTERS = [
+  { x: 275, y: 465, rate: .5, dark: true, vx: -.25, size: 46 },  // poubelle en feu, à gauche
+  { x: 385, y: 185, rate: .2, dark: true, vx: -.15, size: 30 },  // feu sur le toit à gauche
+  { x: 640, y: 300, rate: .45, dark: true, vx: -.4, size: 50 },  // panache noir de la tour
+  { x: 695, y: 110, rate: .3, dark: true, vx: -.3, size: 36 },   // sommet de la tour
+  { x: 1010, y: 540, rate: .55, dark: true, vx: .2, size: 54 },  // poubelle renversée, à droite
+  { x: 1170, y: 330, rate: .3, dark: false, vx: .15, size: 60 }, // grand panache gris à droite
+  { x: 1105, y: 640, rate: .4, dark: false, vx: .35, size: 34 }, // fumigène au sol
+];
+const FIRES = [[275, 470, 70], [1010, 560, 90], [690, 120, 40], [640, 320, 45], [385, 190, 30]];
+function mapBg(x, y) {
+  const s = Math.max(W / IMG_W, H / IMG_H);
+  return [(W - IMG_W * s) / 2 + x * s, (H - IMG_H * s) * .35 + y * s, s];
+}
+// Une bouffée de fumée pré-dessinée, foncée ou claire
+function puffSprite(rgb) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d');
+  for (let i = 0; i < 7; i++) {
+    const x = 64 + (Math.random() - .5) * 36, y = 64 + (Math.random() - .5) * 36, r = 24 + Math.random() * 22;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, `rgba(${rgb},.55)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  }
+  return c;
+}
+const SPRITES = { dark: puffSprite('48,46,46'), light: puffSprite('175,172,168'), hot: puffSprite('110,50,30') };
+let lastT = 0;
 function frame(t) {
   cx.clearRect(0, 0, W, H);
-  for (const p of puffs) {
-    p.y -= p.v; p.x += Math.sin(t / 4000 + p.d * 3) * .3 + p.d * .1;
-    if (p.y < -p.r) { p.y = H + p.r; p.x = Math.random() * W; }
-    const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-    const tint = smokeBoost ? '120,60,50' : '150,148,140';
-    g.addColorStop(0, `rgba(${tint},${p.a})`); g.addColorStop(1, `rgba(${tint},0)`);
-    cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, Math.PI * 2); cx.fill();
+  const dt =Math.min(50, t - (lastT || t)) / 16.7; lastT = t;
+  // lueurs des feux qui vacillent
+  cx.globalCompositeOperation = 'lighter';
+  for (const [fx, fy, fr] of FIRES) {
+    const [x, y, s] = mapBg(fx, fy), r = fr * s * (1 + .15 * Math.sin(t / 90 + fx));
+    const a = .13 + .07 * Math.sin(t / 70 + fy) + .05 * Math.sin(t / 37 + fx) + (smokeBoost ? .08 : 0);
+    const g = cx.createRadialGradient(x, y, 0, x, y, r * 2.2);
+    g.addColorStop(0, `rgba(255,150,40,${a})`); g.addColorStop(1, 'rgba(255,80,0,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 2.2, 0, Math.PI * 2); cx.fill();
+  }
+  cx.globalCompositeOperation = 'source-over';
+  // nouveaux panaches
+  for (const e of EMITTERS) {
+    if (Math.random() < e.rate * dt * (smokeBoost ? 1.5 : 1)) {
+      puffs.push({ e, ox: (Math.random() - .5) * 14, oy: 0, vx: e.vx + (Math.random() - .5) * .25, vy: -(.5 + Math.random() * .5),
+        age: 0, life: 260 + Math.random() * 200, rot: Math.random() * 6.28, vr: (Math.random() - .5) * .01,
+        spr: e.dark ? (Math.random() < .25 ? 'hot' : 'dark') : 'light' });
+    }
+  }
+  for (let i = puffs.length - 1; i >= 0; i--) {
+    const p = puffs[i];
+    p.age += dt; p.ox += (p.vx + Math.sin((t / 1800) + p.rot) * .12) * dt; p.oy += p.vy * dt; p.vy *= .999; p.rot += p.vr * dt;
+    if (p.age > p.life) { puffs.splice(i, 1); continue; }
+    const k = p.age / p.life;
+    const [x, y, s] = mapBg(p.e.x, p.e.y);
+    const size = p.e.size * s * (1 + k * 3.2);
+    const alpha = Math.min(1, p.age / 25) * (1 - k) * .75;
+    cx.save(); cx.globalAlpha = alpha; cx.translate(x + p.ox * s, y + p.oy * s); cx.rotate(p.rot);
+    cx.drawImage(SPRITES[p.spr], -size, -size, size * 2, size * 2); cx.restore();
   }
   const n = smokeBoost ? embers.length : 30;
   for (let i = 0; i < n; i++) {
