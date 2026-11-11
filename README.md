@@ -47,7 +47,7 @@ Puis ouvrir http://localhost:3068.
 
 ## À faire
 
-- Visuels finaux du wild (mégaphone), du scatter (barricade) et de l'euro doré.
+- Visuel final de l'euro doré (le mégaphone et la barrière sont faits).
 - Le fond montre encore « POLICE » sur l'hélicoptère (petit) : à retirer dans la version finale.
 - Niveaux de mise, devise, mode replay et appels au serveur (RGS) : à brancher lors du portage.
 - Porter les maths et l'interface vers les outils de Stake Engine.

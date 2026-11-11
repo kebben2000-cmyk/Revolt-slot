@@ -92,7 +92,14 @@
 
   /* ---------- La foule ---------- */
   const VOWELS = { o: [450, 800], a: [750, 1250], e: [480, 1750], i: [320, 2300], on: [400, 900] };
+  // Limite le nombre de groupes de voix joués en même temps : au-delà, le moteur audio sature
+  // et TOUT le son décroche (musique comprise). Pendant la musique du bonus, on en laisse moins.
+  let activeVoices = 0;
   function voices(t, dur, vowel, { vol = .12, n = 10, pitch = [140, 260], glide = 1, pan = 0, a = .05, rev = .45, far = false } = {}) {
+    const busy = !!(music && music.s);
+    if (activeVoices >= (busy ? 5 : 9)) return;
+    activeVoices++; setTimeout(() => { activeVoices--; }, (Math.max(0, t - now()) + dur + .7) * 1000);
+    n = Math.min(n, busy ? 6 : 10);
     const [f1, f2] = VOWELS[vowel];
     const sum = ctx.createGain(); sum.gain.value = 1 / Math.sqrt(n);
     for (let i = 0; i < n; i++) {
@@ -378,7 +385,7 @@
     if (musicRendering) return musicRendering;
     const OAC = root.OfflineAudioContext || root.webkitOfflineAudioContext;
     if (!OAC || !ctx) return Promise.resolve(null);
-    const sr = ctx.sampleRate, c = new OAC(2, Math.ceil(LOOP * sr), sr);
+    const TAIL = 2, sr = ctx.sampleRate, c = new OAC(2, Math.ceil((LOOP + TAIL) * sr), sr);
     const nb = c.createBuffer(1, sr, sr); { const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
     const eg = (g, t, at, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + at); g.gain.exponentialRampToValueAtTime(.0001, t + at + d); };
     const mix = c.createGain(); mix.gain.value = .9;
@@ -450,7 +457,16 @@
     rf.frequency.setValueAtTime(400, rt0); rf.frequency.exponentialRampToValueAtTime(8000, LOOP - .01);
     rg.gain.setValueAtTime(.0001, rt0); rg.gain.exponentialRampToValueAtTime(.13, LOOP - .03); rg.gain.linearRampToValueAtTime(0, LOOP);
     rs.connect(rf).connect(rg).connect(mix); rs.start(rt0); rs.stop(LOOP);
-    musicRendering = c.startRendering().then(buf => (musicBuf = buf)).catch(e => { musicError = String(e); return null; });
+    musicRendering = c.startRendering().then(buf => {
+      // les notes qui débordent après la fin de la boucle sont ajoutées au début : raccord parfait, sans clic
+      const len = Math.round(LOOP * sr), loopBuf = ctx.createBuffer(2, len, sr);
+      for (let ch = 0; ch < 2; ch++) {
+        const src = buf.getChannelData(ch), dst = loopBuf.getChannelData(ch);
+        dst.set(src.subarray(0, len));
+        for (let i = len; i < src.length && i - len < len; i++) dst[i - len] += src[i];
+      }
+      return (musicBuf = loopBuf);
+    }).catch(e => { musicError = String(e); return null; });
     return musicRendering;
   }
   function musicStart() {
@@ -518,7 +534,7 @@
   }
   function tick() {
     if (!enabled) return;
-    const t = now() + .1, k = 1 + intensity * 1.6;
+    const t = now() + .1, k = 1 + intensity * (music && music.s ? .5 : 1.6);
     if (Math.random() < .09 * k && t - lastSiren > 6) { lastSiren = t; pinpon(t, { dur: R(5, 9), vol: .03 + intensity * .03 }); }
     if (Math.random() < .012 * k) whistle(t, { vol: .008 + intensity * .01, pattern: pick([[.12, .12, .4], [.55], [.08, .08, .08, .08]]) });
     if (Math.random() < .03 * k) petard(t, { dist: R(.5, 1), vol: .22 });

@@ -32,9 +32,11 @@ const BOXES = process.argv[4] ? JSON.parse(process.argv[4]) : {
     const push = i => { if (!bg[i] && isBg(i)) { bg[i] = 1; q[qt++] = i; } };
     for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
     for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+    for (const [sx, sy] of JSON.parse(process.env.SEEDS || "[]")) push((sy - y0) * w + (sx - x0));
     while (qh < qt) { const i = q[qh++], x = i % w, y = (i / w) | 0;
       if (x > 0) push(i - 1); if (x < w - 1) push(i + 1); if (y > 0) push(i - w); if (y < h - 1) push(i + w); }
-    // 1b. trous fermés couleur fond (ex. la dragonne de la matraque)
+    // 1b. trous fermés couleur fond (ex. la dragonne de la matraque) — désactivable avec NOHOLES=1
+    if (!process.env.NOHOLES) {
     const seen = new Uint8Array(n);
     for (let i = 0; i < n; i++) if (!bg[i] && !seen[i] && isBg(i)) {
       const comp = []; qh = qt = 0; q[qt++] = i; seen[i] = 1;
@@ -42,6 +44,7 @@ const BOXES = process.argv[4] ? JSON.parse(process.argv[4]) : {
         for (const k of [x > 0 ? j-1 : -1, x < w-1 ? j+1 : -1, y > 0 ? j-w : -1, y < h-1 ? j+w : -1])
           if (k >= 0 && !bg[k] && !seen[k] && isBg(k)) { seen[k] = 1; q[qt++] = k; } }
       if (comp.length > 400) comp.forEach(j => bg[j] = 1);
+    }
     }
     // 2. retire le liseré clair restant (2 passes)
     for (let pass = 0; pass < 2; pass++) {
