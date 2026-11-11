@@ -34,7 +34,7 @@
   const SCATTER_PAY = { 3: 1, 4: 5, 5: 20 };
   const SCATTER_SPINS = { 3: 10, 4: 12, 5: 15 };
   const RETRIGGER_SPINS = 5;
-  const MAX_WIN = 5000;      // plafond, en × mise
+  const MAX_WIN = 2000;      // plafond, en × mise (atteint ~1 fois sur 2 M en jeu normal, exigence Stake : > 1 sur 10 M)
   const BONUS_BUY_COST = 67; // prix de l'achat du bonus, en × mise
 
   const PAYLINES = [

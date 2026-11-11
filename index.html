@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Revolt</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Special+Elite&display=swap" rel="stylesheet">
 <style>
-/* Un seul univers : nuit de manif, affiche sérigraphiée sur béton. Machine au centre, tout le reste = la rue. */
+/* Un seul univers : nuit de manif, affiche sérigraphiée sur béton.
+   La scène du jeu a une taille fixe (1280×720 en paysage, 720×1280 en portrait)
+   et est mise à l'échelle pour tenir dans n'importe quel écran, mini-lecteur compris, sans défilement. */
+@font-face { font-family: 'Anton'; src: url('assets/fonts/anton.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Permanent Marker'; src: url('assets/fonts/permanent-marker.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Special Elite'; src: url('assets/fonts/special-elite.woff2') format('woff2'); font-display: swap; }
 :root {
   --red: #e10600;
   --red-deep: #8f0400;
@@ -23,81 +25,89 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
 body {
-  background: var(--black);
-  color: var(--paper);
-  font-family: var(--type);
-  overflow-x: hidden;
-  -webkit-tap-highlight-color: transparent;
+  background: var(--black); color: var(--paper); font-family: var(--type);
+  -webkit-tap-highlight-color: transparent; user-select: none;
 }
 button { font: inherit; color: inherit; cursor: pointer; }
-button:focus-visible, select:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 
-/* ---------- La rue : fond, affiches, fumée, gyrophares ---------- */
+/* ---------- La rue : fond, fumée, gyrophares ---------- */
 #street {
   position: fixed; inset: 0; z-index: 0; overflow: hidden;
   background: #1a1918 url('assets/bg.jpg') center 35% / cover no-repeat;
 }
-#street::before { /* assombrit le décor pour que la machine reste lisible */
+#street::before {
   content: ''; position: absolute; inset: 0; z-index: 0; transition: background .6s;
   background:
     radial-gradient(ellipse 55% 60% at 50% 55%, rgba(10,10,10,.55), transparent 75%),
     linear-gradient(180deg, rgba(10,10,10,.35) 0%, rgba(10,10,10,.1) 40%, rgba(10,10,10,.6) 100%);
 }
-body.insurrection #street::before {
+body.strike #street::before {
   background:
     radial-gradient(ellipse 55% 60% at 50% 55%, rgba(40,5,0,.55), transparent 75%),
     linear-gradient(180deg, rgba(120,10,0,.45) 0%, rgba(200,40,0,.25) 50%, rgba(60,5,0,.65) 100%);
 }
-.wallposter {
-  position: absolute; padding: 10px 14px 12px; font-family: var(--display);
-  text-transform: uppercase; line-height: .95; letter-spacing: .01em;
-  opacity: .22; filter: contrast(1.1);
-  clip-path: polygon(0 3%, 6% 0, 38% 4%, 71% 0, 100% 5%, 97% 38%, 100% 74%, 95% 100%, 58% 96%, 22% 100%, 3% 95%, 0 60%);
-}
-.wallposter.r { background: var(--red); color: var(--paper); }
-.wallposter.p { background: var(--paper); color: var(--black); }
-.wallposter.y { background: var(--yellow); color: var(--black); }
 #smoke { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
-.gyro { z-index: 2; }
 .gyro {
-  position: absolute; top: -30vmax; width: 70vmax; height: 70vmax; border-radius: 50%;
+  position: absolute; z-index: 2; top: -30vmax; width: 70vmax; height: 70vmax; border-radius: 50%;
   mix-blend-mode: screen; opacity: 0; pointer-events: none;
 }
 .gyro.blue { left: -25vmax; background: radial-gradient(circle, rgba(40,90,255,.55), transparent 62%); animation: gyro 1.1s infinite; }
 .gyro.red  { right: -25vmax; background: radial-gradient(circle, rgba(255,20,20,.5), transparent 62%); animation: gyro 1.1s .55s infinite; }
 @keyframes gyro { 0%, 100% { opacity: 0; } 12% { opacity: .55; } 30% { opacity: .1; } 42% { opacity: .45; } 60% { opacity: 0; } }
-body.insurrection .gyro.blue, body.insurrection .gyro.red { animation-duration: .6s; }
+body.strike .gyro.blue, body.strike .gyro.red { animation-duration: .6s; }
 
-/* ---------- Mise en page ---------- */
-#app {
-  position: relative; z-index: 1; min-height: 100%;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 14px; padding: 14px 16px 64px;
+/* ---------- La scène (taille fixe, mise à l'échelle) ---------- */
+#stage {
+  position: fixed; left: 50%; top: 50%; z-index: 1;
+  width: 1280px; height: 720px; transform-origin: 50% 50%;
+  display: grid; padding: 16px 18px 52px; gap: 14px 20px;
+  grid-template-columns: 270px 1fr 250px;
+  grid-template-rows: auto auto auto 1fr;
+  grid-template-areas:
+    "head   center spin"
+    "bal    center bet"
+    "win    center tools"
+    "msg    center tools";
 }
-header { text-align: center; display: grid; justify-items: center; gap: 6px; }
+#stage.portrait {
+  width: 720px; height: 1280px; padding: 22px 18px 56px; gap: 14px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto auto 1fr;
+  grid-template-areas:
+    "head   head"
+    "center center"
+    "msg    msg"
+    "bal    win"
+    "spin   bet"
+    "tools  tools";
+}
+header { grid-area: head; display: grid; justify-items: start; gap: 8px; align-content: start; }
+#stage.portrait header { justify-items: center; }
 .logo {
-  font-family: var(--display); font-size: clamp(56px, 12vw, 104px); line-height: .9;
+  font-family: var(--display); font-size: 78px; line-height: .9; font-weight: normal;
   text-transform: uppercase; margin: 0; letter-spacing: .01em;
-  background: var(--red); color: var(--paper); padding: 8px 22px 12px;
+  background: var(--red); color: var(--paper); padding: 6px 18px 10px;
   transform: rotate(-2deg);
   clip-path: polygon(1% 6%, 12% 0, 40% 5%, 63% 0, 99% 4%, 100% 50%, 98% 96%, 70% 100%, 33% 95%, 4% 100%, 0 55%);
   text-shadow: 3px 3px 0 var(--black);
 }
+#stage.portrait .logo { font-size: 96px; }
 .logo span { color: var(--yellow); }
-.tagline {
-  margin: 0; background: var(--paper); color: var(--black); padding: 3px 10px;
-  font-size: 15px; transform: rotate(1.2deg);
-}
+.tagline { margin: 0; background: var(--paper); color: var(--black); padding: 3px 10px; font-size: 15px; transform: rotate(1.2deg); }
+
+#center { grid-area: center; display: grid; align-content: center; justify-items: center; gap: 22px; position: relative; }
+#stage.portrait #center { gap: 18px; }
 
 /* ---------- Bandeau de bonus ---------- */
 #fsbar {
-  display: none; align-items: stretch; gap: 10px; flex-wrap: wrap; justify-content: center;
-  font-family: var(--display); text-transform: uppercase;
+  display: flex; visibility: hidden; align-items: stretch; gap: 10px; justify-content: center;
+  font-family: var(--display); text-transform: uppercase; height: 58px;
 }
-body.insurrection #fsbar { display: flex; }
-#fsbar > div { padding: 6px 14px; display: grid; justify-items: center; line-height: 1; }
+body.strike #fsbar { visibility: visible; }
+#fsbar > div { padding: 6px 14px; display: grid; justify-items: center; align-content: center; line-height: 1; }
 #fsbar small { font-family: var(--type); text-transform: none; font-size: 12px; margin-top: 4px; }
 .fs-title { background: var(--red); color: var(--paper); font-size: 26px; }
 .fs-left { background: var(--paper); color: var(--black); font-size: 26px; }
@@ -107,42 +117,35 @@ body.insurrection #fsbar { display: flex; }
 
 /* ---------- La machine ---------- */
 #machine {
-  position: relative; width: min(100%, 640px);
-  background: var(--concrete-dark);
-  padding: 12px; border: 3px solid var(--black);
+  position: relative; width: 680px;
+  background: var(--concrete-dark); padding: 12px; border: 3px solid var(--black);
   box-shadow: 0 0 0 3px var(--concrete), 0 30px 60px rgba(0,0,0,.6);
 }
-#machine::before { /* bande de chantier */
-  content: ''; position: absolute; left: -3px; right: -3px; top: -16px; height: 12px;
+#stage.portrait #machine { width: 684px; }
+#machine::before, #machine::after {
+  content: ''; position: absolute; left: -3px; right: -3px; height: 12px;
   background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, var(--black) 14px 28px);
 }
-#machine::after {
-  content: ''; position: absolute; left: -3px; right: -3px; bottom: -16px; height: 12px;
-  background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, var(--black) 14px 28px);
-}
+#machine::before { top: -16px; }
+#machine::after { bottom: -16px; }
 #reels { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.reel {
-  position: relative; aspect-ratio: 1 / 3; overflow: hidden;
-  background: #191817; border: 2px solid var(--black);
-}
+.reel { position: relative; aspect-ratio: 1 / 3; overflow: hidden; background: #191817; border: 2px solid var(--black); }
 .strip { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
 .cell {
   position: relative; display: grid; place-items: center; padding: 6%;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 60%),
-    var(--paper);
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 60%), var(--paper);
   border-bottom: 2px solid #191817;
 }
 .cell svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.cell img { width: 100%; height: 100%; display: block; object-fit: contain; user-select: none;
-  filter: drop-shadow(2px 3px 0 rgba(0,0,0,.35)); }
-.strip.blur .cell img { filter: blur(1.5px); }
+.cell img { width: 100%; height: 100%; display: block; object-fit: contain; filter: drop-shadow(2px 3px 0 rgba(0,0,0,.35)); }
+.strip.blur .cell img, .strip.blur .cell svg { filter: blur(1.5px); }
 .cell.k-wild { background: var(--red); }
 .cell.k-scatter { background: var(--yellow); }
 .cell.k-euro { background: radial-gradient(circle at 50% 45%, #4a3500, #121212 75%); }
+.cell.k-crs, .cell.k-poubelle { background: radial-gradient(circle at 50% 30%, #fff6e4, var(--paper) 70%); }
 .euro-val {
   position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); z-index: 3;
-  font-family: var(--display); font-size: clamp(16px, 3.4vw, 26px); line-height: 1;
+  font-family: var(--display); font-size: 24px; line-height: 1;
   background: var(--black); color: var(--yellow); padding: 2px 8px 4px; border: 2px solid var(--yellow);
   animation: euroIn .5s cubic-bezier(.3,1.8,.5,1);
 }
@@ -152,13 +155,6 @@ body.insurrection #fsbar { display: flex; }
   color: var(--yellow); text-shadow: 0 0 10px rgba(255,212,0,.9), 2px 2px 0 #000;
   transition: transform .7s cubic-bezier(.5,0,.3,1), opacity .7s;
 }
-#reels.quake { animation: quake .5s; }
-@keyframes quake {
-  10%, 50%, 90% { transform: translate(-6px, 3px) rotate(-.6deg); }
-  30%, 70% { transform: translate(6px, -3px) rotate(.6deg); }
-}
-.cell.k-crs, .cell.k-poubelle { background: radial-gradient(circle at 50% 30%, #fff6e4, var(--paper) 70%); }
-.strip.blur .cell svg { filter: blur(1.5px); }
 .cell.hit { animation: hit .9s ease-in-out infinite; z-index: 2; }
 .cell.hit::after {
   content: ''; position: absolute; inset: 3px; border: 4px solid var(--red);
@@ -167,34 +163,29 @@ body.insurrection #fsbar { display: flex; }
 .cell.k-wild.hit::after { border-color: var(--yellow); }
 .cell.dim { filter: grayscale(.8) brightness(.45); }
 @keyframes hit { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06) rotate(-1.5deg); } }
-
-.barricade-banner {
+.mega-banner {
   position: absolute; inset: 0; z-index: 3; display: grid; place-items: center;
   background: repeating-linear-gradient(-45deg, rgba(225,6,0,.22) 0 16px, transparent 16px 32px);
   pointer-events: none; animation: slam .45s cubic-bezier(.3,1.6,.5,1);
 }
-.barricade-banner span {
-  font-family: var(--display); text-transform: uppercase; writing-mode: vertical-rl;
-  transform: rotate(180deg); font-size: clamp(18px, 4vw, 30px); letter-spacing: .08em;
-  background: var(--black); color: var(--yellow); padding: 10px 4px;
+.mega-banner span {
+  font-family: var(--display); text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg);
+  font-size: 28px; letter-spacing: .08em; background: var(--black); color: var(--yellow); padding: 10px 4px;
 }
 @keyframes slam { from { transform: scaleY(1.6); opacity: 0; } to { transform: none; opacity: 1; } }
-
 #lines { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 #lines polyline { fill: none; stroke: var(--red); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round;
   filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000); }
-
-/* Tampon de gain sur la grille */
 #stamp {
-  position: absolute; left: 50%; top: 50%; z-index: 6; pointer-events: none;
-  font-family: var(--display); text-transform: uppercase; font-size: clamp(28px, 7vw, 54px);
+  position: absolute; left: 50%; top: 50%; z-index: 6; pointer-events: none; white-space: nowrap;
+  font-family: var(--display); text-transform: uppercase; font-size: 50px;
   color: var(--paper); background: var(--red); padding: 4px 18px 8px; border: 4px solid var(--black);
   transform: translate(-50%, -50%) rotate(-6deg) scale(0); opacity: 0;
   transition: transform .25s cubic-bezier(.3,1.7,.5,1), opacity .2s;
 }
 #stamp.show { transform: translate(-50%, -50%) rotate(-6deg) scale(1); opacity: 1; }
 
-/* ---------- Animations de lancement ---------- */
+/* ---------- Animations ---------- */
 #machine.shake { animation: shake .38s; }
 @keyframes shake {
   20% { transform: translate(-5px, 2px) rotate(-.5deg); } 40% { transform: translate(5px, -2px) rotate(.5deg); }
@@ -202,7 +193,9 @@ body.insurrection #fsbar { display: flex; }
 }
 #reels.thump { animation: thump .2s; }
 @keyframes thump { 40% { transform: translateY(4px) scaleY(.99); } }
-.reel.spinning::after { /* reflet de gyrophare qui balaie le rouleau */
+#reels.quake { animation: quake .5s; }
+@keyframes quake { 10%, 50%, 90% { transform: translate(-6px, 3px) rotate(-.6deg); } 30%, 70% { transform: translate(6px, -3px) rotate(.6deg); } }
+.reel.spinning::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
   background: linear-gradient(180deg, transparent 0 30%, rgba(225,6,0,.28) 45%, rgba(40,90,255,.28) 55%, transparent 70%);
   background-size: 100% 300%; animation: sweep .5s linear infinite;
@@ -233,7 +226,7 @@ body.insurrection #fsbar { display: flex; }
 @keyframes press { 0% { transform: scale(1); } 25% { transform: translateY(5px) scale(.88); } 65% { transform: scale(1.07) rotate(-6deg); } 100% { transform: none; } }
 #shout {
   position: absolute; left: 50%; top: 50%; z-index: 8; pointer-events: none; white-space: nowrap;
-  font-family: var(--display); text-transform: uppercase; font-size: clamp(30px, 8vw, 64px); line-height: 1;
+  font-family: var(--display); text-transform: uppercase; font-size: 60px; line-height: 1;
   background: var(--black); color: var(--yellow); padding: 6px 20px 10px; border: 4px solid var(--yellow);
   opacity: 0; transform: translate(-50%, -50%) rotate(-5deg);
 }
@@ -246,51 +239,55 @@ body.insurrection #fsbar { display: flex; }
   100% { opacity: 1; transform: translate(170%, -50%) rotate(-5deg); }
 }
 
-/* ---------- Message type "bandeau de presse" ---------- */
+/* ---------- Message ---------- */
 #msg {
-  min-height: 28px; text-align: center; font-size: 15px; color: var(--paper);
-  max-width: 640px;
+  grid-area: msg; align-self: end; font-size: 16px; line-height: 1.35; color: var(--paper);
+  background: rgba(18,18,18,.72); border-left: 4px solid var(--red); padding: 10px 12px; min-height: 64px;
 }
+#stage.portrait #msg { text-align: center; border-left: 0; border-top: 4px solid var(--red); min-height: 0; }
 #msg b { color: var(--yellow); font-weight: normal; }
 
-/* ---------- Tableau de bord ---------- */
-#hud {
-  width: min(100%, 640px); display: grid; gap: 10px;
-  grid-template-columns: 1fr auto 1fr; align-items: center;
-}
-.meter { background: var(--paper); color: var(--black); padding: 6px 10px; display: grid; gap: 2px; }
-.meter label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-.meter output { font-family: var(--display); font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
-.meter.win { background: var(--yellow); text-align: right; }
-.bet-row { display: flex; align-items: center; gap: 6px; }
+/* ---------- Compteurs et commandes ---------- */
+.meter { background: var(--paper); color: var(--black); padding: 8px 12px; display: grid; gap: 3px; align-content: center; }
+.meter .lbl { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+.meter output { font-family: var(--display); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+#balBox { grid-area: bal; }
+#winBox { grid-area: win; background: var(--yellow); }
+#stage.portrait #winBox { text-align: right; }
+#spinBox { grid-area: spin; display: grid; place-items: center; }
+#betBox { grid-area: bet; }
+.bet-row { display: flex; align-items: center; gap: 8px; }
 .bet-row button {
-  width: 30px; height: 30px; border: 2px solid var(--black); background: var(--black); color: var(--paper);
-  font-family: var(--display); font-size: 18px; line-height: 1; padding: 0;
+  width: 40px; height: 40px; border: 2px solid var(--black); background: var(--black); color: var(--paper);
+  font-family: var(--display); font-size: 24px; line-height: 1; padding: 0;
 }
+.bet-row button:disabled { opacity: .35; cursor: default; }
+.bet-row output { flex: 1; text-align: center; }
 #spin {
-  width: 104px; height: 104px; border-radius: 50%; border: 4px solid var(--black);
+  width: 150px; height: 150px; border-radius: 50%; border: 5px solid var(--black);
   background: radial-gradient(circle at 35% 30%, #ff3b2f, var(--red) 45%, var(--red-deep));
-  color: var(--paper); font-family: var(--display); font-size: 22px; text-transform: uppercase; line-height: 1;
-  box-shadow: 0 0 0 4px var(--paper), 0 8px 0 4px var(--black);
-  transition: transform .1s;
+  color: var(--paper); font-family: var(--display); font-size: 32px; text-transform: uppercase; line-height: 1;
+  box-shadow: 0 0 0 5px var(--paper), 0 10px 0 5px var(--black);
 }
-#spin:active { transform: translateY(4px); }
+#stage.portrait #spin { width: 130px; height: 130px; font-size: 28px; }
 #spin:disabled { filter: grayscale(.6) brightness(.7); cursor: default; }
-#spin small { display: block; font-family: var(--type); font-size: 11px; text-transform: none; margin-top: 4px; }
-
-#tools { width: min(100%, 640px); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+#spin small { display: block; font-family: var(--type); font-size: 12px; text-transform: none; margin-top: 4px; }
+#tools { grid-area: tools; display: grid; gap: 8px; align-content: start; grid-template-columns: 1fr 1fr; }
+#stage.portrait #tools { grid-template-columns: 1fr 1fr 1fr; }
 .tool {
-  border: 2px solid var(--paper); background: transparent; padding: 7px 12px;
-  text-transform: uppercase; font-size: 13px; letter-spacing: .05em;
+  border: 2px solid var(--paper); background: rgba(18,18,18,.6); padding: 10px 8px;
+  text-transform: uppercase; font-size: 14px; letter-spacing: .04em; line-height: 1.2;
 }
+.tool.wide { grid-column: 1 / -1; }
 .tool[aria-pressed="true"] { background: var(--paper); color: var(--black); }
 .tool:disabled { opacity: .4; cursor: default; }
 #buy { border-color: var(--yellow); color: var(--yellow); }
 #buy:hover:not(:disabled) { background: var(--yellow); color: var(--black); }
+#info { font-family: var(--display); font-size: 18px; }
 
 /* ---------- Bandeau défilant ---------- */
 #ticker {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; overflow: hidden;
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; overflow: hidden;
   background: var(--yellow); color: var(--black); border-top: 3px solid var(--black);
   font-family: var(--display); text-transform: uppercase; font-size: 17px; white-space: nowrap;
   height: 34px; display: flex; align-items: center;
@@ -299,59 +296,63 @@ body.insurrection #fsbar { display: flex; }
 #ticker .up { color: var(--red); }
 @keyframes crawl { to { transform: translateX(-100%); } }
 
-/* ---------- Écrans plein cadre (gros gain, bonus, règles) ---------- */
+/* ---------- Écrans (dans la scène) ---------- */
 .overlay {
-  position: fixed; inset: 0; z-index: 20; display: none; place-items: center; padding: 16px;
+  position: absolute; inset: 0; z-index: 20; display: none; place-items: center; padding: 30px;
   background: rgba(10,10,10,.82);
 }
 .overlay.show { display: grid; }
 .poster {
-  position: relative; max-width: 560px; width: 100%; text-align: center;
-  background: var(--paper); color: var(--black); padding: 28px 22px 26px;
+  position: relative; max-width: 620px; width: 100%; text-align: center;
+  background: var(--paper); color: var(--black); padding: 30px 26px 28px;
   clip-path: polygon(0 2%, 8% 0, 45% 3%, 80% 0, 100% 3%, 98% 45%, 100% 97%, 62% 100%, 25% 97%, 2% 100%, 0 55%);
   animation: pop .5s cubic-bezier(.3,1.5,.5,1);
 }
 @keyframes pop { from { transform: scale(.4) rotate(-8deg); opacity: 0; } }
 .poster h2 {
   font-family: var(--display); text-transform: uppercase; font-weight: normal; margin: 0;
-  font-size: clamp(48px, 13vw, 96px); line-height: .9; color: var(--red); text-wrap: balance;
+  font-size: 92px; line-height: .9; color: var(--red); text-wrap: balance;
 }
-.poster .big { font-family: var(--display); font-size: clamp(40px, 10vw, 72px); line-height: 1; margin: 12px 0 4px; font-variant-numeric: tabular-nums; }
-.poster p { margin: 8px auto; max-width: 42ch; font-size: 16px; }
-.poster .cta { margin-top: 14px; background: var(--black); color: var(--paper); border: 0; padding: 10px 22px;
-  font-family: var(--display); font-size: 22px; text-transform: uppercase; }
+.poster .big { font-family: var(--display); font-size: 64px; line-height: 1; margin: 12px 0 4px; font-variant-numeric: tabular-nums; }
+.poster p { margin: 8px auto; max-width: 44ch; font-size: 17px; }
+.poster .cta, .poster .alt { margin-top: 14px; border: 0; padding: 12px 26px; font-family: var(--display); font-size: 24px; text-transform: uppercase; }
+.poster .cta { background: var(--black); color: var(--paper); }
+.poster .alt { background: transparent; color: var(--black); border: 2px solid var(--black); }
 .poster.red { background: var(--red); color: var(--paper); }
 .poster.red h2 { color: var(--yellow); }
 .poster.red .cta { background: var(--paper); color: var(--black); }
+.choices { display: flex; gap: 10px; justify-content: center; margin: 18px 0 6px; }
+.choices button { width: 76px; height: 56px; border: 3px solid var(--black); background: transparent; font-family: var(--display); font-size: 26px; color: var(--black); }
+.choices button[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
 
-#rules .poster { max-height: calc(100% - 20px); overflow-y: auto; text-align: left; max-width: 640px; clip-path: none; }
-#rules h2 { font-size: 48px; }
-#rules h3 { font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 24px; margin: 18px 0 6px; color: var(--red); }
-.paytable { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.pt { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: center; border: 2px solid var(--black); padding: 6px; }
-.pt svg, .pt img { width: 56px; height: 56px; object-fit: contain; }
-.pt div { font-size: 13px; line-height: 1.35; font-variant-numeric: tabular-nums; }
-.pt b { font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 15px; display: block; }
+#rules .poster { max-height: 100%; overflow-y: auto; text-align: left; max-width: 900px; clip-path: none; user-select: text; }
+#rules h2 { font-size: 54px; }
+#rules h3 { font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 24px; margin: 20px 0 6px; color: var(--red); }
+#rules p, #rules li { font-size: 15px; max-width: none; margin: 4px 0; }
 #rules ul { padding-left: 20px; margin: 6px 0; }
-#rules li { margin: 4px 0; }
-.close { position: sticky; top: 0; float: right; background: var(--black); color: var(--paper); border: 0; padding: 6px 12px; font-family: var(--display); text-transform: uppercase; }
+#rules table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+#rules th, #rules td { border: 2px solid var(--black); padding: 6px 10px; text-align: left; }
+#rules th { background: var(--black); color: var(--paper); font-weight: normal; text-transform: uppercase; font-size: 13px; letter-spacing: .05em; }
+.paytable { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pt { display: grid; grid-template-columns: 60px 1fr; gap: 10px; align-items: center; border: 2px solid var(--black); padding: 6px; }
+.pt svg, .pt img { width: 60px; height: 60px; object-fit: contain; }
+.pt div { font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.pt b { font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 16px; display: block; }
+.guide { display: grid; grid-template-columns: 170px 1fr; gap: 4px 14px; font-size: 15px; }
+.guide dt { font-family: var(--display); text-transform: uppercase; }
+.guide dd { margin: 0; }
+.disclaimer { font-size: 13px !important; line-height: 1.45; border-top: 2px solid var(--black); padding-top: 10px; margin-top: 18px !important; }
+.close { position: sticky; top: 0; float: right; background: var(--black); color: var(--paper); border: 0; padding: 8px 14px; font-family: var(--display); font-size: 18px; text-transform: uppercase; z-index: 2; }
+#stage.portrait .paytable { grid-template-columns: 1fr 1fr; }
 
-/* ---------- Petits écrans ---------- */
-@media (max-width: 520px) {
-  #hud { grid-template-columns: 1fr 1fr; }
-  #spin { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
-  .meter output { font-size: 20px; }
-  #reels { gap: 4px; }
-  #machine { padding: 8px; }
-}
 @media (prefers-reduced-motion: reduce) {
-  #machine.shake, #reels.thump { animation: none; }
+  #machine.shake, #reels.thump, #reels.quake { animation: none; }
 }
 </style>
 </head>
 <body>
 
-<!-- ===================== SYMBOLES (sprite SVG) ===================== -->
+<!-- ===================== SYMBOLES SPÉCIAUX (provisoires, sprite SVG) ===================== -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <pattern id="hazard" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -365,105 +366,7 @@ body.insurrection #fsbar { display: flex; }
       <stop offset=".7" stop-color="#ff6a00"/><stop offset="1" stop-color="#e10600"/>
     </radialGradient>
   </defs>
-
-  <!-- 1. Bidon d'essence -->
-  <symbol id="s-bidon" viewBox="0 0 100 100">
-    <path d="M30 14h14v10h-6v-4h-8z" fill="#121212"/>
-    <path d="M60 10l12 12-6 6-12-12z" fill="#121212"/>
-    <path d="M24 26h40l12 12v48a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4V30a4 4 0 0 1 4-4z" fill="#e10600" stroke="#121212" stroke-width="4"/>
-    <path d="M28 40l40 40M68 40L28 80" stroke="#8f0400" stroke-width="6"/>
-    <circle cx="48" cy="60" r="15" fill="#ffd400" stroke="#121212" stroke-width="4"/>
-    <text x="48" y="68" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="22" fill="#121212">€</text>
-    <path d="M82 46v-26M74 28l8-10 8 10" fill="none" stroke="#121212" stroke-width="5" stroke-linecap="square"/>
-  </symbol>
-
-  <!-- 2. Portefeuille vide -->
-  <symbol id="s-portefeuille" viewBox="0 0 100 100">
-    <path d="M14 38h66a6 6 0 0 1 6 6v36a6 6 0 0 1-6 6H14z" fill="#121212"/>
-    <path d="M14 38v48" stroke="#121212" stroke-width="4"/>
-    <path d="M14 38l10-16h48l8 16" fill="#3a3936" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <rect x="58" y="52" width="32" height="20" rx="3" fill="#2b2a28" stroke="#ece4d3" stroke-width="2"/>
-    <circle cx="68" cy="62" r="4" fill="#ece4d3"/>
-    <rect x="18" y="56" width="34" height="16" fill="#e10600" transform="rotate(-6 35 64)"/>
-    <text x="35" y="69" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="13" fill="#ece4d3" transform="rotate(-6 35 64)">0,00 €</text>
-    <!-- la mite qui s'échappe -->
-    <path d="M44 14l-8-6 2 10zM44 14l8-8-1 11z" fill="#121212"/>
-    <path d="M44 14v6" stroke="#121212" stroke-width="2"/>
-    <path d="M30 26c4-4 8-4 12-8" fill="none" stroke="#121212" stroke-width="1.5" stroke-dasharray="2 3"/>
-  </symbol>
-
-  <!-- 3. Ticket de caisse interminable -->
-  <symbol id="s-ticket" viewBox="0 0 100 100">
-    <path d="M30 4h40v74l-5 5-5-5-5 5-5-5-5 5-5-5-5 5-5-5z" fill="#fff" stroke="#121212" stroke-width="3" transform="rotate(-8 50 50)"/>
-    <g transform="rotate(-8 50 50)" fill="#121212">
-      <rect x="35" y="11" width="22" height="3"/><rect x="35" y="18" width="30" height="2"/>
-      <rect x="35" y="23" width="26" height="2"/><rect x="35" y="28" width="30" height="2"/>
-      <rect x="35" y="33" width="20" height="2"/><rect x="35" y="38" width="30" height="2"/>
-      <rect x="35" y="43" width="24" height="2"/><rect x="35" y="48" width="30" height="2"/>
-      <rect x="35" y="53" width="18" height="2"/>
-      <rect x="35" y="60" width="30" height="1.5"/>
-      <text x="35" y="71" font-family="Anton, Impact, sans-serif" font-size="9">TOTAL</text>
-      <text x="65" y="71" text-anchor="end" font-family="Anton, Impact, sans-serif" font-size="9" fill="#e10600">487,90</text>
-    </g>
-    <path d="M68 80c8 4 16 2 20-6" fill="none" stroke="#121212" stroke-width="3"/>
-    <rect x="62" y="20" width="30" height="16" fill="#e10600" transform="rotate(12 77 28)"/>
-    <text x="77" y="33" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="12" fill="#fff" transform="rotate(12 77 28)">+38 %</text>
-  </symbol>
-
-  <!-- 4. Gilet jaune -->
-  <symbol id="s-gilet" viewBox="0 0 100 100">
-    <path d="M30 8l12 4 8 22 8-22 12-4 10 18-4 10v54H24V36l-4-10z" fill="#ffd400" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <rect x="24" y="58" width="52" height="8" fill="#b9b8b2" stroke="#121212" stroke-width="2"/>
-    <rect x="24" y="72" width="52" height="8" fill="#b9b8b2" stroke="#121212" stroke-width="2"/>
-    <path d="M38 12v46M62 12v46" stroke="#b9b8b2" stroke-width="7"/>
-    <path d="M50 34v56" stroke="#121212" stroke-width="3"/>
-  </symbol>
-
-  <!-- 5. Pavé -->
-  <symbol id="s-pave" viewBox="0 0 100 100">
-    <path d="M50 16l34 16-34 16-34-16z" fill="#c9c7c0" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M16 32v34l34 18V48z" fill="#8a8984" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M84 32v34L50 84V48z" fill="#5a5955" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M40 26l8 4-4 6M28 54l6 4M62 60l8-6 2 8" fill="none" stroke="#121212" stroke-width="2"/>
-    <path d="M10 88c20-6 60-6 80 0" stroke="#e10600" stroke-width="4" fill="none"/>
-  </symbol>
-
-  <!-- 6. Fumigène -->
-  <symbol id="s-fumigene" viewBox="0 0 100 100">
-    <g fill="#e10600" opacity=".85">
-      <circle cx="62" cy="30" r="16"/><circle cx="78" cy="20" r="12"/><circle cx="48" cy="18" r="11"/>
-      <circle cx="70" cy="44" r="10"/>
-    </g>
-    <g fill="#ff6b5e" opacity=".9"><circle cx="58" cy="26" r="7"/><circle cx="80" cy="16" r="5"/></g>
-    <rect x="36" y="38" width="14" height="52" rx="2" fill="#121212" transform="rotate(30 43 64)"/>
-    <rect x="36" y="48" width="14" height="10" fill="#ffd400" transform="rotate(30 43 64)"/>
-    <circle cx="57" cy="41" r="9" fill="url(#flame)"/>
-    <circle cx="57" cy="41" r="4" fill="#fff"/>
-  </symbol>
-
-  <!-- 7. Poubelle en feu -->
-  <symbol id="s-poubelle" viewBox="0 0 100 100">
-    <path d="M50 4c6 12-6 14 2 26 4-8 10-6 10-16 10 10 14 20 8 30H30c-6-10 0-22 8-28 0 8 4 10 6 10-4-10 0-16 6-22z" fill="url(#flame)" stroke="#121212" stroke-width="2.5" stroke-linejoin="round"/>
-    <rect x="22" y="40" width="56" height="8" fill="#121212"/>
-    <path d="M26 48h48l-5 44H31z" fill="#2f5e2f" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M38 54v32M50 54v32M62 54v32" stroke="#1d3d1d" stroke-width="4"/>
-    <path d="M26 48h48l-5 44H31z" fill="#121212" opacity=".35"/>
-    <circle cx="36" cy="94" r="4" fill="#121212"/><circle cx="64" cy="94" r="4" fill="#121212"/>
-  </symbol>
-
-  <!-- 8. CRS -->
-  <symbol id="s-crs" viewBox="0 0 100 100">
-    <path d="M28 40a22 22 0 0 1 44 0v8H28z" fill="#1d2530" stroke="#121212" stroke-width="4"/>
-    <path d="M26 40h48v14a6 6 0 0 1-6 6H32a6 6 0 0 1-6-6z" fill="#6f8496" stroke="#121212" stroke-width="4" opacity=".95"/>
-    <path d="M32 44h22" stroke="#cfe0ee" stroke-width="3" opacity=".8"/>
-    <path d="M16 54h68v38H16z" fill="#1d2530" stroke="#121212" stroke-width="4"/>
-    <path d="M16 54h68v38H16z" fill="none" stroke="#ece4d3" stroke-width="1.5" stroke-dasharray="4 4" transform="translate(0 0) scale(1)" opacity=".35"/>
-    <rect x="30" y="64" width="40" height="18" fill="#ece4d3"/>
-    <text x="50" y="80" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="17" fill="#121212">CRS</text>
-    <path d="M10 22l6 4M90 22l-6 4M50 6v6" stroke="#2f6bff" stroke-width="4" stroke-linecap="round"/>
-  </symbol>
-
-  <!-- WILD : le mégaphone (provisoire) -->
+  <!-- WILD : le mégaphone -->
   <symbol id="s-wild" viewBox="0 0 100 100">
     <path d="M76 30q9 20 0 40M85 21q14 29 0 58" fill="none" stroke="#ffd400" stroke-width="5" stroke-linecap="round"/>
     <path d="M30 38L68 16v66L30 60z" fill="#ece4d3" stroke="#121212" stroke-width="4" stroke-linejoin="round"/>
@@ -474,16 +377,14 @@ body.insurrection #fsbar { display: flex; }
     <rect x="8" y="80" width="46" height="16" fill="#121212" transform="rotate(-4 31 88)"/>
     <text x="31" y="93" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="13" letter-spacing="2" fill="#ffd400" transform="rotate(-4 31 88)">WILD</text>
   </symbol>
-
-  <!-- MULTIPLICATEUR : l'euro doré (General Strike) -->
+  <!-- MULTIPLICATEUR : l'euro doré -->
   <symbol id="s-euro" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="40" fill="url(#gold)" stroke="#121212" stroke-width="4"/>
     <circle cx="50" cy="50" r="31" fill="none" stroke="#8a5a00" stroke-width="3" stroke-dasharray="3 4"/>
     <text x="50" y="66" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="44" fill="#6b4300">€</text>
     <path d="M80 14l3 8 8 3-8 3-3 8-3-8-8-3 8-3zM16 70l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff6c2"/>
   </symbol>
-
-  <!-- SCATTER : barricade enflammée -->
+  <!-- SCATTER : la barricade -->
   <symbol id="s-scatter" viewBox="0 0 100 100">
     <path d="M18 54c0-16 8-20 12-30 2 10 8 8 8 18 6-8 4-18 14-26 2 12 10 14 8 26 6-4 6-10 12-12 4 10 10 14 8 24z" fill="url(#flame)" stroke="#121212" stroke-width="2.5" stroke-linejoin="round"/>
     <rect x="6" y="44" width="88" height="10" fill="#7a4a22" stroke="#121212" stroke-width="3" transform="rotate(-14 50 50)"/>
@@ -502,108 +403,90 @@ body.insurrection #fsbar { display: flex; }
   <div class="gyro blue"></div>
   <div class="gyro red"></div>
 </div>
+<div id="flash" aria-hidden="true"></div>
 
 <!-- ===================== LE JEU ===================== -->
-<div id="app">
+<div id="stage">
   <header>
     <h1 class="logo">Rev<span>olt</span></h1>
-    <p class="tagline">Tout augmente. Sauf les salaires.</p>
+    <p class="tagline">Everything goes up. Except wages.</p>
   </header>
 
-  <div id="fsbar" aria-live="polite">
-    <div class="fs-title">General Strike</div>
-    <div class="fs-left"><span id="fsLeft">10</span><small>tours restants</small></div>
-    <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>multiplicateur</small></div>
-    <div class="fs-left"><span id="fsWin">0,00 €</span><small>gains du bonus</small></div>
-  </div>
-
-  <div id="machine">
-    <div id="reels"></div>
-    <svg id="lines"></svg>
-    <div id="stamp"></div>
-    <div id="shout" aria-hidden="true"></div>
-  </div>
-  <div id="flash" aria-hidden="true"></div>
-
-  <div id="msg" aria-live="polite">Bienvenue dans la rue. <b>20 lignes</b>, mise de démo, rien d'autre à perdre.</div>
-
-  <div id="hud">
-    <div class="meter">
-      <label for="balance">Solde</label>
-      <output id="balance">1 000,00 €</output>
+  <div id="center">
+    <div id="fsbar" aria-live="polite">
+      <div class="fs-title">General Strike</div>
+      <div class="fs-left"><span id="fsLeft">10</span><small>spins left</small></div>
+      <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>multiplier</small></div>
+      <div class="fs-left"><span id="fsWin">0.00</span><small>feature win</small></div>
     </div>
-    <button id="spin" aria-label="Lancer">Lancer<small>espace</small></button>
-    <div class="meter win">
-      <label for="win">Gain</label>
-      <output id="win">0,00 €</output>
-    </div>
-    <div class="meter" style="grid-column:1/-1">
-      <label for="bet">Mise</label>
-      <div class="bet-row">
-        <button id="betDown" aria-label="Baisser la mise">−</button>
-        <output id="bet" style="flex:1;text-align:center">1,00 €</output>
-        <button id="betUp" aria-label="Augmenter la mise">+</button>
-      </div>
+    <div id="machine">
+      <div id="reels"></div>
+      <svg id="lines"></svg>
+      <div id="stamp"></div>
+      <div id="shout" aria-hidden="true"></div>
     </div>
   </div>
 
+  <div id="msg" aria-live="polite"></div>
+
+  <div class="meter" id="balBox"><span class="lbl">Balance</span><output id="balance"></output></div>
+  <div class="meter" id="winBox"><span class="lbl">Win</span><output id="win"></output></div>
+  <div id="spinBox"><button id="spin" aria-label="Spin">Spin<small>space</small></button></div>
+  <div class="meter" id="betBox">
+    <span class="lbl" id="betLbl">Bet</span>
+    <div class="bet-row">
+      <button id="betDown" aria-label="Decrease">−</button>
+      <output id="bet"></output>
+      <button id="betUp" aria-label="Increase">+</button>
+    </div>
+  </div>
   <div id="tools">
-    <button class="tool" id="buy">Acheter le General Strike · <span id="buyPrice">67,00 €</span></button>
-    <button class="tool" id="auto" aria-pressed="false">Auto ×10</button>
+    <button class="tool wide" id="buy"></button>
+    <button class="tool" id="auto" aria-pressed="false">Autoplay</button>
     <button class="tool" id="turbo" aria-pressed="false">Turbo</button>
-    <button class="tool" id="sound" aria-pressed="true">Son : on</button>
-    <button class="tool" id="info">Règles & gains</button>
+    <button class="tool" id="sound" aria-pressed="true">Sound: on</button>
+    <button class="tool" id="info" aria-label="Game rules and information">i · Rules</button>
   </div>
+
+  <div id="ticker" aria-hidden="true"><div class="track" id="tickerTrack"></div></div>
+
+  <!-- Gros gain -->
+  <div class="overlay" id="bigwin"><div class="poster red">
+    <h2 id="bwTitle"></h2>
+    <div class="big" id="bwAmount"></div>
+    <p id="bwSub"></p>
+    <button class="cta" id="bwClose">Continue</button>
+  </div></div>
+
+  <!-- Début / fin du General Strike -->
+  <div class="overlay" id="bonusScreen"><div class="poster">
+    <h2 id="bsTitle">General Strike</h2>
+    <div class="big" id="bsBig"></div>
+    <p id="bsText"></p>
+    <button class="cta" id="bsGo"></button>
+  </div></div>
+
+  <!-- Confirmation de l'autoplay -->
+  <div class="overlay" id="autoScreen" role="dialog" aria-labelledby="autoTitle"><div class="poster">
+    <h2 id="autoTitle" style="font-size:64px">Autoplay</h2>
+    <p id="autoText"></p>
+    <div class="choices" id="autoChoices">
+      <button data-n="10" aria-pressed="true">10</button>
+      <button data-n="25" aria-pressed="false">25</button>
+      <button data-n="50" aria-pressed="false">50</button>
+      <button data-n="100" aria-pressed="false">100</button>
+    </div>
+    <button class="alt" id="autoCancel">Cancel</button>
+    <button class="cta" id="autoStart">Start autoplay</button>
+  </div></div>
+
+  <!-- Règles et informations -->
+  <div class="overlay" id="rules" role="dialog" aria-labelledby="rulesTitle"><div class="poster">
+    <button class="close" id="rulesClose">Close</button>
+    <h2 id="rulesTitle">Game rules</h2>
+    <div id="rulesBody"></div>
+  </div></div>
 </div>
-
-<div id="ticker" aria-hidden="true"><div class="track" id="tickerTrack"></div></div>
-
-<!-- Écran gros gain -->
-<div class="overlay" id="bigwin"><div class="poster red">
-  <h2 id="bwTitle">Émeute !</h2>
-  <div class="big" id="bwAmount">0,00 €</div>
-  <p id="bwSub">La rue a parlé.</p>
-  <button class="cta" id="bwClose">Continuer</button>
-</div></div>
-
-<!-- Écran déclenchement / fin de bonus -->
-<div class="overlay" id="bonusScreen"><div class="poster">
-  <h2 id="bsTitle">General Strike</h2>
-  <div class="big" id="bsBig">10 tours gratuits</div>
-  <p id="bsText"></p>
-  <button class="cta" id="bsGo">Descendre dans la rue</button>
-</div></div>
-
-<!-- Règles -->
-<div class="overlay" id="rules"><div class="poster">
-  <button class="close" id="rulesClose">Fermer</button>
-  <h2>Règles</h2>
-  <p>5 rouleaux, 3 rangées, 20 lignes fixes. Les gains se lisent de gauche à droite, à partir du premier rouleau. Seul le meilleur gain de chaque ligne est payé. Montants calculés pour la mise actuelle.</p>
-  <h3>Les symboles</h3>
-  <div class="paytable" id="paytable"></div>
-  <h3>Le mégaphone (wild)</h3>
-  <ul><li>Apparaît sur les rouleaux 2, 3 et 4 et remplace tous les symboles sauf la barricade et l'euro doré. Quand il tombe, il lance un slogan et fait trembler les rouleaux.</li></ul>
-  <h3>Barricade (scatter)</h3>
-  <ul>
-    <li>Paie n'importe où : 3 = 1×, 4 = 5×, 5 = 20× la mise.</li>
-    <li>3, 4 ou 5 barricades déclenchent le General Strike avec 10, 12 ou 15 tours gratuits.</li>
-  </ul>
-  <h3>General Strike (tours gratuits)</h3>
-  <ul>
-    <li><b>Mégaphone géant</b> : chaque mégaphone qui tombe recouvre tout son rouleau.</li>
-    <li><b>Euro doré</b> : n'apparaît que pendant le bonus. Chaque euro ajoute +1, +2, +3 ou +5 au multiplicateur, avant le calcul des gains du tour.</li>
-    <li><b>Inflation</b> : le multiplicateur démarre à ×1 et gagne aussi +1 après chaque tour gagnant. Il ne redescend jamais.</li>
-    <li>3 barricades ou plus pendant le bonus : +5 tours.</li>
-  </ul>
-  <h3>Achat du bonus</h3>
-  <ul><li>Déclenche directement le General Strike pour 67× la mise.</li></ul>
-  <h3>Chiffres</h3>
-  <ul>
-    <li>RTP théorique : environ 96 % (simulation sur 2 millions de parties, prototype non certifié).</li>
-    <li>Gain maximum : 5 000× la mise.</li>
-    <li>Version prototype, argent fictif uniquement.</li>
-  </ul>
-</div></div>
 
 <script src="math.js"></script>
 <script src="sound.js"></script>
@@ -612,19 +495,72 @@ body.insurrection #fsbar { display: flex; }
 'use strict';
 const M = window.RueMath;
 const KEYS = M.SYMBOLS.map(s => s.key);
-const BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true };
 const $ = id => document.getElementById(id);
-const fmt = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+/* ---------------- Paramètres de lancement (comme sur Stake Engine) ----------------
+   ?social=true  → vocabulaire Stake.us (play au lieu de bet, etc.)
+   ?currency=USD → devise d'affichage (XGC / XSC pour les jetons de Stake.us)                */
+const params = new URLSearchParams(location.search);
+const SOCIAL = params.get('social') === 'true';
+const CURRENCY = (params.get('currency') || (SOCIAL ? 'XGC' : 'USD')).toUpperCase();
+
+// Mots qui changent en mode social (liste des termes interdits sur Stake.us)
+const L = SOCIAL ? {
+  bet: 'play', Bet: 'Play', bets: 'plays', totalBet: 'total play amount', TotalBet: 'Total play amount',
+  pays: 'wins', Pays: 'Wins', pay: 'win', paytable: 'win table', Paytable: 'Win table',
+  buyBtn: 'Get General Strike', buyMode: 'General Strike feature', costLbl: 'Played for', costs: 'can be played for',
+  bought: 'General Strike instantly triggered.', insufficient: 'Not enough coins. Lower your play amount.',
+} : {
+  bet: 'bet', Bet: 'Bet', bets: 'bets', totalBet: 'total bet', TotalBet: 'Total bet',
+  pays: 'pays', Pays: 'Pays', pay: 'pay', paytable: 'paytable', Paytable: 'Paytable',
+  buyBtn: 'Buy General Strike', buyMode: 'Bonus buy', costLbl: 'Cost', costs: 'costs',
+  bought: 'General Strike bought. The barricades are going up.', insufficient: 'Insufficient balance. Lower your bet.',
+};
+
+// Noms des symboles affichés (anglais, seule langue obligatoire)
+const NAMES = { bidon: 'Fuel Can', portefeuille: 'Empty Wallet', ticket: 'Receipt', gilet: 'Yellow Vest', pave: 'Cobblestone',
+  fumigene: 'Smoke Flare', poubelle: 'Burning Bin', crs: 'Riot Helmet', wild: 'Megaphone', scatter: 'Barricade', euro: 'Golden Euro' };
+const nameOf = sym => NAMES[KEYS[sym]];
+
+// Chiffres déclarés dans les règles (issus des simulations — à recalculer avec le Math SDK de Stake)
+const MODES = [
+  { id: 'base', label: 'Base game', cost: 1, rtp: '96.2%' },
+  { id: 'buy', label: L.buyMode, cost: M.BONUS_BUY_COST, rtp: '96.0%' },
+];
+
+const BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
+const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true };
+const DISPLAY_DECIMALS = { JPY: 0, KRW: 0, IDR: 0, VND: 0, CLP: 0 };
+function fmt(v) {
+  if (CURRENCY === 'XGC' || CURRENCY === 'XSC') return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (CURRENCY === 'XGC' ? ' GC' : ' SC');
+  const d = DISPLAY_DECIMALS[CURRENCY] ?? 2;
+  try { return v.toLocaleString('en-US', { style: 'currency', currency: CURRENCY, minimumFractionDigits: d, maximumFractionDigits: d }); }
+  catch (e) { return v.toFixed(2) + ' ' + CURRENCY; }
+}
 const bet = () => BETS[state.betIdx];
 const wait = ms => new Promise(r => setTimeout(r, state.turbo ? ms * 0.45 : ms));
 
-/* ---------------- Son : ambiance de manif (voir sound.js) ---------------- */
+/* ---------------- Mise à l'échelle de la scène ---------------- */
+const stage = $('stage');
+let scale = 1;
+function fit() {
+  const portrait = innerWidth / innerHeight < .9;
+  stage.classList.toggle('portrait', portrait);
+  const W0 = portrait ? 720 : 1280, H0 = portrait ? 1280 : 720;
+  scale = Math.min(innerWidth / W0, innerHeight / H0);
+  stage.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  if (reels.length) reels.forEach(layoutStrip);
+}
+// position d'un élément relative à un autre, en pixels de la scène (avant mise à l'échelle)
+function rel(el, parent) {
+  const a = el.getBoundingClientRect(), b = parent.getBoundingClientRect();
+  return { x: (a.left - b.left) / scale, y: (a.top - b.top) / scale, w: a.width / scale, h: a.height / scale };
+}
+
+/* ---------------- Son (voir sound.js) ---------------- */
 const S = window.RueSound;
 const sfx = (name, v) => { if (state.sound) S.play(name, v); };
-// Le navigateur n'autorise le son qu'après un premier geste : l'ambiance démarre au premier clic ou touche.
 const armSound = () => {
   removeEventListener('pointerdown', armSound); removeEventListener('keydown', armSound);
   if (state.sound) S.enable(true);
@@ -640,51 +576,39 @@ for (let r = 0; r < 5; r++) {
   reel.appendChild(strip); reelsEl.appendChild(reel);
   reels.push({ reel, strip, syms: [] });
 }
-// Visuels fournis (PNG détourés). Les symboles absents gardent leur dessin provisoire.
 const IMG = { bidon: 1, portefeuille: 1, ticket: 1, gilet: 1, pave: 1, poubelle: 1, crs: 1, fumigene: 1 };
 Object.keys(IMG).forEach(k => { const i = new Image(); i.src = `assets/symbols/${k}.png`; });
 function symArt(sym, label) {
   const k = KEYS[sym];
   return IMG[k]
-    ? `<img src="assets/symbols/${k}.png" alt="${label ? M.SYMBOLS[sym].name : ''}" draggable="false">`
-    : `<svg viewBox="0 0 100 100" ${label ? `role="img" aria-label="${M.SYMBOLS[sym].name}"` : 'aria-hidden="true"'}><use href="#s-${k}"/></svg>`;
+    ? `<img src="assets/symbols/${k}.png" alt="${label ? nameOf(sym) : ''}" draggable="false">`
+    : `<svg viewBox="0 0 100 100" ${label ? `role="img" aria-label="${nameOf(sym)}"` : 'aria-hidden="true"'}><use href="#s-${k}"/></svg>`;
 }
-function cellHTML(sym) {
-  return `<div class="cell k-${KEYS[sym]}">${symArt(sym, true)}</div>`;
-}
+const cellHTML = sym => `<div class="cell k-${KEYS[sym]}">${symArt(sym, true)}</div>`;
 function cellH() { return reels[0].reel.clientHeight / 3; }
-function layoutStrip(R) {
-  const h = cellH();
-  R.strip.querySelectorAll('.cell').forEach(c => { c.style.height = h + 'px'; });
-}
+function layoutStrip(R) { const h = cellH(); R.strip.querySelectorAll('.cell').forEach(c => { c.style.height = h + 'px'; }); }
 function setReel(r, syms) {
   const R = reels[r]; R.syms = syms.slice();
-  R.strip.style.transition = 'none'; R.strip.style.transform = 'translateY(0)';
-  R.strip.classList.remove('blur');
+  R.strip.style.transform = 'translateY(0)'; R.strip.classList.remove('blur');
   R.strip.innerHTML = syms.map(cellHTML).join('');
   layoutStrip(R);
 }
-function randomSym(strips) {
-  const s = strips[Math.floor(Math.random() * strips.length)];
-  return s[Math.floor(Math.random() * s.length)];
-}
-function initialGrid() {
-  return M.STRIPS_BASE.map(strip => { const p = Math.floor(Math.random() * strip.length); return [0,1,2].map(i => strip[(p + i) % strip.length]); });
-}
-initialGrid().forEach((col, r) => setReel(r, col));
-window.addEventListener('resize', () => reels.forEach(layoutStrip));
+function randomSym(strips) { const s = strips[Math.floor(Math.random() * strips.length)]; return s[Math.floor(Math.random() * s.length)]; }
+fit(); addEventListener('resize', fit);
+M.STRIPS_BASE.forEach((strip, r) => { const p = Math.floor(Math.random() * strip.length); setReel(r, [0, 1, 2].map(i => strip[(p + i) % strip.length])); });
 
 function cellAt(r, row) { return reels[r].strip.children[row]; }
 function clearMarks() {
   document.querySelectorAll('.cell.hit, .cell.dim').forEach(c => c.classList.remove('hit', 'dim'));
   $('lines').innerHTML = '';
-  document.querySelectorAll('.barricade-banner').forEach(b => b.remove());
+  document.querySelectorAll('.mega-banner').forEach(b => b.remove());
   $('stamp').classList.remove('show');
 }
 
 /* ---- effets ---- */
 function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
-const SHOUTS = ['On lâche rien !', 'Tout augmente !', 'Dans la rue !', 'Ça va péter !', 'Révolte !', 'Le plein à 112 € ?!'];
+const SHOUTS = ["We won't back down!", 'Prices up, wages down!', 'Take the streets!', "It's gonna blow!", 'Revolt!', '€112 to fill up?!'];
+const MEGA = ["We won't back down!", 'All together!', 'General strike!', 'Prices up, wages down!', 'Revolt!', 'Hear us!'];
 function kick(fast) {
   restart($('spin'), 'go');
   sfx('spin');
@@ -694,16 +618,14 @@ function kick(fast) {
   if (Math.random() < .35) { const s = $('shout'); s.textContent = SHOUTS[Math.floor(Math.random() * SHOUTS.length)]; restart(s, 'go'); }
 }
 function sparks(r, n, colors) {
-  const mb = $('machine').getBoundingClientRect(), rb = reels[r].reel.getBoundingClientRect();
+  const m = $('machine'), rb = rel(reels[r].reel, m);
   for (let i = 0; i < n; i++) {
     const p = document.createElement('span'); p.className = 'spark';
-    const x = rb.left - mb.left + Math.random() * rb.width, y = rb.bottom - mb.top - 4;
-    p.style.cssText = `--x:${x}px;--y:${y}px;--s:${3 + Math.random() * 5}px;--c:${colors[i % colors.length]};` +
+    p.style.cssText = `--x:${rb.x + Math.random() * rb.w}px;--y:${rb.y + rb.h - 4}px;--s:${3 + Math.random() * 5}px;--c:${colors[i % colors.length]};` +
       `--dx:${(Math.random() - .5) * 90}px;--dy:${-20 - Math.random() * 70}px;--r:${Math.random() * 360}deg`;
-    $('machine').appendChild(p); setTimeout(() => p.remove(), 700);
+    m.appendChild(p); setTimeout(() => p.remove(), 700);
   }
 }
-const MEGA = ['On lâche rien !', 'Tous ensemble !', 'Grève générale !', 'Le plein à 112 € ?!', 'Ça va péter !', 'Révolte !', 'Rendez l\'argent !'];
 let megaThisSpin = false;
 function megaphone() {
   if (megaThisSpin) return; megaThisSpin = true;
@@ -714,7 +636,7 @@ function land(r, col, fast) {
   sfx('stop');
   const R = reels[r];
   R.reel.classList.remove('spinning', 'tease');
-  if (col.includes(M.WILD)) megaphone(); // même en turbo : slogan + rouleaux qui tremblent
+  if (col.includes(M.WILD)) megaphone();
   if (fast) return;
   restart(R.reel, 'land'); setTimeout(() => R.reel.classList.remove('land'), 320);
   restart(reelsEl, 'thump');
@@ -727,26 +649,21 @@ function land(r, col, fast) {
     }
   });
 }
-
 function spinTo(grid, strips) {
   clearMarks();
   megaThisSpin = false;
-  // Les rouleaux tournent toujours (c'est le jeu) ; « animations réduites » coupe seulement secousses et flashs.
   const h = cellH(), fast = state.turbo;
   kick(fast || reduceMotion);
   let teaseDelay = 0, scat = 0;
-  const promises = grid.map((col, r) => {
-    // suspense : 2 barricades déjà posées → les rouleaux suivants traînent et s'illuminent
-    const tease = !fast && scat >= 2;
+  return Promise.all(grid.map((col, r) => {
+    const tease = !fast && scat >= 2;   // 2 barricades posées : les rouleaux suivants font durer le suspense
     scat += col.filter(s => s === M.SCATTER).length;
     if (tease) teaseDelay += 1100;
-    const dur = state.turbo ? 260 + r * 90 : 640 + r * 230 + teaseDelay;
+    const dur = fast ? 260 + r * 90 : 640 + r * 230 + teaseDelay;
     return new Promise(resolve => {
       const R = reels[r];
-      const extra = 10 + r * 4 + Math.round(teaseDelay / 70);
-      const filler = Array.from({ length: extra }, () => randomSym(strips));
+      const filler = Array.from({ length: 10 + r * 4 + Math.round(teaseDelay / 70) }, () => randomSym(strips));
       const all = [...col, ...filler, ...R.syms];
-      R.strip.style.transition = 'none';
       R.strip.innerHTML = all.map(cellHTML).join('');
       layoutStrip(R);
       const start = -(all.length - 3) * h;
@@ -758,39 +675,28 @@ function spinTo(grid, strips) {
         ? [{ transform: `translateY(${start}px)` }, { transform: 'translateY(0)' }]
         : [
             { transform: `translateY(${start}px)`, easing: 'cubic-bezier(.3,0,.6,1)' },
-            // petit recul vers le haut avant de partir
             { transform: `translateY(${start - h * .3}px)`, offset: Math.min(.2, 130 / dur), easing: 'cubic-bezier(.55,0,.2,1)' },
-            // dépasse un peu en bas puis se cale
             { transform: `translateY(${h * .14}px)`, offset: .9, easing: 'ease-out' },
             { transform: 'translateY(0)' },
           ];
-      const anim = R.strip.animate(frames, { duration: dur });
-      anim.onfinish = () => { setReel(r, col); land(r, col, fast); resolve(); };
+      R.strip.animate(frames, { duration: dur }).onfinish = () => { setReel(r, col); land(r, col, fast); resolve(); };
     });
-  });
-  return Promise.all(promises);
+  }));
 }
-
 function drawLines(wins) {
-  const svg = $('lines'), box = reelsEl.getBoundingClientRect(), mb = $('machine').getBoundingClientRect();
-  svg.setAttribute('viewBox', `0 0 ${mb.width} ${mb.height}`);
+  const svg = $('lines'), m = $('machine');
+  svg.setAttribute('viewBox', `0 0 ${m.offsetWidth} ${m.offsetHeight}`);
   svg.innerHTML = wins.filter(w => w.line !== undefined).map(w => {
-    const pts = M.PAYLINES[w.line].map((row, r) => {
-      const c = cellAt(r, row).getBoundingClientRect();
-      return `${c.left - mb.left + c.width / 2},${c.top - mb.top + c.height / 2}`;
-    }).join(' ');
+    const pts = M.PAYLINES[w.line].map((row, r) => { const c = rel(cellAt(r, row), m); return `${c.x + c.w / 2},${c.y + c.h / 2}`; }).join(' ');
     return `<polyline points="${pts}"/>`;
   }).join('');
 }
-
 async function showWins(wins, scatterCells, amount, label) {
   const hits = new Set();
   wins.forEach(w => w.cells.forEach(([r, row]) => hits.add(r + ':' + row)));
   scatterCells.forEach(([r, row]) => hits.add(r + ':' + row));
   if (!hits.size) return;
-  for (let r = 0; r < 5; r++) for (let row = 0; row < 3; row++) {
-    cellAt(r, row).classList.add(hits.has(r + ':' + row) ? 'hit' : 'dim');
-  }
+  for (let r = 0; r < 5; r++) for (let row = 0; row < 3; row++) cellAt(r, row).classList.add(hits.has(r + ':' + row) ? 'hit' : 'dim');
   drawLines(wins);
   if (amount > 0) {
     const st = $('stamp'); st.textContent = (label ? label + ' ' : '+') + fmt(amount); st.classList.add('show');
@@ -798,27 +704,25 @@ async function showWins(wins, scatterCells, amount, label) {
   }
   await wait(1300);
 }
-
 function describeWins(wins) {
   if (!wins.length) return '';
   const best = wins.slice().sort((a, b) => b.pay - a.pay)[0];
-  return `${best.count} × ${M.SYMBOLS[best.sym].name}` + (wins.length > 1 ? ` et ${wins.length - 1} autre${wins.length > 2 ? 's' : ''} ligne${wins.length > 2 ? 's' : ''}` : '');
+  return `${best.count} × ${nameOf(best.sym)}` + (wins.length > 1 ? ` + ${wins.length - 1} more line${wins.length > 2 ? 's' : ''}` : '');
 }
-
 function flyToMeter(fromEl, text) {
   const a = fromEl.getBoundingClientRect(), b = $('fsInflBox').getBoundingClientRect();
   const f = document.createElement('div'); f.className = 'euro-fly'; f.textContent = text;
   f.style.left = (a.left + a.width / 2 - 16) + 'px'; f.style.top = (a.top + a.height / 2 - 16) + 'px';
   document.body.appendChild(f);
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    f.style.transform = 'translate(' + (b.left + b.width / 2 - a.left - a.width / 2) + 'px,' + (b.top + b.height / 2 - a.top - a.height / 2) + 'px) scale(1.4)';
+    f.style.transform = `translate(${b.left + b.width / 2 - a.left - a.width / 2}px, ${b.top + b.height / 2 - a.top - a.height / 2}px) scale(1.4)`;
     f.style.opacity = '.2';
   }));
   setTimeout(() => f.remove(), 800);
 }
 function showBanner(r) {
-  const b = document.createElement('div'); b.className = 'barricade-banner';
-  b.innerHTML = '<span>Mégaphone</span>';
+  const b = document.createElement('div'); b.className = 'mega-banner';
+  b.innerHTML = '<span>Megaphone</span>';
   reels[r].reel.appendChild(b);
 }
 
@@ -841,9 +745,9 @@ function countUp(el, to, ms) {
 }
 async function bigWin(x, amount) {
   let title = null, sub = '';
-  if (x >= 100) { title = 'Mai 68 !'; sub = 'Sous les pavés, la plage.'; }
-  else if (x >= 30) { title = 'Émeute !'; sub = 'La rue a parlé.'; }
-  else if (x >= 10) { title = 'Ça chauffe !'; sub = 'Les poubelles flambent.'; }
+  if (x >= 100) { title = 'May 68!'; sub = 'Beneath the cobblestones, the beach.'; }
+  else if (x >= 30) { title = 'Riot!'; sub = 'The street has spoken.'; }
+  else if (x >= 10) { title = 'Heating up!'; sub = 'The bins are on fire.'; }
   if (!title) return;
   sfx('bigwin', x);
   await overlay('bigwin', () => { $('bwTitle').textContent = title; $('bwSub').textContent = sub; $('bwAmount').textContent = fmt(0); countUp($('bwAmount'), amount, 1400); });
@@ -853,30 +757,32 @@ async function bigWin(x, amount) {
 function render() {
   $('balance').textContent = fmt(state.balance);
   $('bet').textContent = fmt(bet());
-  $('buyPrice').textContent = fmt(bet() * M.BONUS_BUY_COST);
+  $('buy').textContent = `${L.buyBtn} · ${fmt(bet() * M.BONUS_BUY_COST)}`;
   const lock = state.busy;
-  $('spin').disabled = lock; $('buy').disabled = lock || state.balance < bet() * M.BONUS_BUY_COST;
-  $('betDown').disabled = lock; $('betUp').disabled = lock;
+  $('spin').disabled = lock;
+  $('buy').disabled = lock || state.balance < bet() * M.BONUS_BUY_COST;
+  $('betDown').disabled = lock || state.betIdx === 0;
+  $('betUp').disabled = lock || state.betIdx === BETS.length - 1;
 }
 function msg(html) { $('msg').innerHTML = html; }
 
 async function play(mode) {
   if (state.busy) return;
   const cost = mode === 'buy' ? bet() * M.BONUS_BUY_COST : bet();
-  if (state.balance < cost) { msg('Solde insuffisant. <b>Baisse la mise</b> ou recharge la page pour repartir à 1 000 €.'); state.auto = 0; syncAuto(); return; }
+  if (state.balance < cost) { msg(L.insufficient); state.auto = 0; syncAuto(); return; }
   state.busy = true; state.balance -= cost; $('win').textContent = fmt(0); render();
-  msg(mode === 'buy' ? 'Tu as acheté le General Strike. <b>Les barricades arrivent.</b>' : 'Les rouleaux tournent…');
+  msg(mode === 'buy' ? `<b>${L.bought}</b>` : 'The reels are rolling…');
 
   const round = M.playRound(mode);
   const b = bet();
   await spinTo(round.base.grid, M.STRIPS_BASE);
   const baseAmt = round.base.win * b;
   if (round.base.win > 0) {
-    msg(round.base.scatters >= 3 ? `<b>${round.base.scatters} barricades !</b> ` + describeWins(round.base.wins) : describeWins(round.base.wins));
+    msg(round.base.scatters >= 3 ? `<b>${round.base.scatters} barricades!</b> ` + describeWins(round.base.wins) : describeWins(round.base.wins));
     await showWins(round.base.wins, round.base.scatters >= 3 ? round.base.scatterCells : [], baseAmt);
   } else {
     sfx('lose');
-    msg(['Rien. Comme ta fiche de paie.', 'Le prix du plein, lui, a encore bougé.', 'Rien cette fois. On lâche rien.', 'Les rouleaux restent calmes. Pour l\'instant.'][Math.floor(Math.random() * 4)]);
+    msg(['Nothing. Just like your payslip.', 'Fuel prices moved again. The reels did not.', "Nothing this time. We won't back down.", 'The street is quiet. For now.'][Math.floor(Math.random() * 4)]);
   }
   let shown = baseAmt;
   $('win').textContent = fmt(shown);
@@ -886,15 +792,14 @@ async function play(mode) {
     sfx('bonus');
     await overlay('bonusScreen', () => {
       $('bsTitle').textContent = 'General Strike';
-      $('bsBig').textContent = `${B.spinsAwarded} tours gratuits`;
-      $('bsText').textContent = 'Tout le pays s\'arrête. Les mégaphones recouvrent leur rouleau, les euros dorés gonflent le multiplicateur, et il ne redescend jamais.';
-      $('bsGo').textContent = 'Descendre dans la rue';
+      $('bsBig').textContent = `${B.spinsAwarded} free spins`;
+      $('bsText').textContent = 'The whole country stops. Megaphones take over their reel, Golden Euros pump up the multiplier, and it never goes down.';
+      $('bsGo').textContent = 'Take to the streets';
     });
-    document.body.classList.add('insurrection'); smokeBoost = 1;
+    document.body.classList.add('strike'); smokeBoost = 1;
     let bonusTotal = 0;
     $('fsInfl').textContent = '×1'; $('fsWin').textContent = fmt(0);
-    for (let i = 0; i < B.spins.length; i++) {
-      const s = B.spins[i];
+    for (const s of B.spins) {
       $('fsLeft').textContent = s.left + 1;
       await spinTo(s.raw, M.STRIPS_FREE);
       $('fsLeft').textContent = s.left;
@@ -907,49 +812,49 @@ async function play(mode) {
           await wait(420);
         }
         $('fsInfl').textContent = '×' + s.mult;
-        const box = $('fsInflBox'); box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
-        msg('<b>Euro doré !</b> Le multiplicateur passe à ×' + s.mult + '.');
+        restart($('fsInflBox'), 'bump');
+        msg(`<b>Golden Euro!</b> Multiplier up to ×${s.mult}.`);
         await wait(450);
       }
       if (s.expanded.length) {
         await wait(200);
         for (const r of s.expanded) { setReel(r, [M.WILD, M.WILD, M.WILD]); showBanner(r); sfx('barricade'); await wait(260); }
-        msg('<b>Mégaphone géant !</b> Il recouvre tout le rouleau.');
+        msg('<b>Megaphone!</b> It takes over the whole reel.');
         await wait(500);
       }
       if (s.win > 0) {
         msg(describeWins(s.wins) + (s.mult > 1 ? ` · <b>×${s.mult}</b>` : ''));
         await showWins(s.wins, [], s.win * b, s.mult > 1 ? '×' + s.mult : '');
         bonusTotal += s.win * b; shown += s.win * b;
-        $('fsWin').textContent = fmt(bonusTotal); $('win').textContent = fmt(shown);
+        $('fsWin').textContent = fmt(bonusTotal); $('win').textContent = fmt(Math.min(shown, M.MAX_WIN * b));
         $('fsInfl').textContent = '×' + s.nextMult;
-        const box = $('fsInflBox'); box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
+        restart($('fsInflBox'), 'bump');
         sfx('inflation');
       } else {
-        msg('Tour à vide. Le multiplicateur tient bon à <b>×' + s.mult + '</b>.');
+        msg(`Empty spin. The multiplier holds at <b>×${s.mult}</b>.`);
         await wait(350);
       }
       if (s.retrigger) {
-        sfx('retrigger'); msg(`<b>+${s.retrigger} tours !</b> D'autres barricades se dressent.`);
+        sfx('retrigger'); msg(`<b>+${s.retrigger} spins!</b> More barricades go up.`);
         await showWins([], s.scatterCells, 0); await wait(300);
       }
     }
     clearMarks();
     sfx('bonusEnd');
     await overlay('bonusScreen', () => {
-      $('bsTitle').textContent = 'Fin de la grève';
+      $('bsTitle').textContent = 'Strike over';
       $('bsBig').textContent = fmt(round.totalWin * b - baseAmt);
-      $('bsText').textContent = round.capped ? 'Gain maximum atteint : 5 000× la mise.' : `Multiplicateur final : ×${B.spins[B.spins.length - 1].nextMult}.`;
-      $('bsGo').textContent = 'Rentrer';
+      $('bsText').textContent = round.capped ? `Max win reached: ${M.MAX_WIN.toLocaleString('en-US')}× the ${L.totalBet}.` : `Final multiplier: ×${B.spins[B.spins.length - 1].nextMult}.`;
+      $('bsGo').textContent = 'Go home';
     });
-    document.body.classList.remove('insurrection'); smokeBoost = 0;
+    document.body.classList.remove('strike'); smokeBoost = 0;
   }
 
   const total = round.totalWin * b;
   state.balance += total;
   $('win').textContent = fmt(total);
   await bigWin(round.totalWin * b / cost * (mode === 'buy' ? M.BONUS_BUY_COST : 1), total);
-  if (total > 0) msg(`Gain total : <b>${fmt(total)}</b>` + (mode === 'buy' ? ` pour ${fmt(cost)} misés.` : '.'));
+  if (total > 0) msg(`Total win: <b>${fmt(total)}</b>`);
   state.busy = false; render();
 
   if (state.auto > 0) {
@@ -958,74 +863,133 @@ async function play(mode) {
   }
 }
 
+/* ---------------- Autoplay : toujours confirmé explicitement ---------------- */
+let autoChoice = 10;
 function syncAuto() {
   $('auto').setAttribute('aria-pressed', state.auto > 0 ? 'true' : 'false');
-  $('auto').textContent = state.auto > 0 ? `Stop (${state.auto})` : 'Auto ×10';
+  $('auto').textContent = state.auto > 0 ? `Stop (${state.auto})` : 'Autoplay';
 }
+$('auto').addEventListener('click', () => {
+  if (state.auto > 0) { state.auto = 0; syncAuto(); return; }
+  $('autoText').textContent = `Spins will be played automatically at ${fmt(bet())} each. You can stop at any time with the Stop button.`;
+  $('autoScreen').classList.add('show'); $('autoStart').focus();
+});
+$('autoChoices').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  autoChoice = +btn.dataset.n;
+  $('autoChoices').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+});
+$('autoCancel').addEventListener('click', () => $('autoScreen').classList.remove('show'));
+$('autoStart').addEventListener('click', () => {
+  $('autoScreen').classList.remove('show');
+  state.auto = autoChoice; syncAuto(); if (!state.busy) play('base');
+});
 
 $('spin').addEventListener('click', () => play('base'));
 $('buy').addEventListener('click', () => play('buy'));
 $('betUp').addEventListener('click', () => { state.betIdx = Math.min(BETS.length - 1, state.betIdx + 1); render(); });
 $('betDown').addEventListener('click', () => { state.betIdx = Math.max(0, state.betIdx - 1); render(); });
-$('auto').addEventListener('click', () => {
-  if (state.auto > 0) { state.auto = 0; syncAuto(); return; }
-  state.auto = 10; syncAuto(); if (!state.busy) play('base');
-});
 $('turbo').addEventListener('click', e => { state.turbo = !state.turbo; e.currentTarget.setAttribute('aria-pressed', state.turbo); });
 $('sound').addEventListener('click', e => {
   state.sound = !state.sound;
   e.currentTarget.setAttribute('aria-pressed', state.sound);
-  e.currentTarget.textContent = state.sound ? 'Son : on' : 'Son : off';
+  e.currentTarget.textContent = state.sound ? 'Sound: on' : 'Sound: off';
   S.enable(state.sound);
 });
-$('info').addEventListener('click', () => { buildPaytable(); $('rules').classList.add('show'); $('rulesClose').focus(); });
+$('info').addEventListener('click', () => { buildRules(); $('rules').classList.add('show'); $('rulesClose').focus(); });
 $('rulesClose').addEventListener('click', () => $('rules').classList.remove('show'));
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && !document.querySelector('.overlay.show') && e.target.tagName !== 'BUTTON') { e.preventDefault(); play('base'); }
-  if (e.key === 'Escape') $('rules').classList.remove('show');
+  // La barre d'espace lance un tour (exigence Stake), sauf si un écran est ouvert
+  if (e.code === 'Space' && !document.querySelector('.overlay.show')) { e.preventDefault(); play('base'); }
+  if (e.key === 'Escape') { $('rules').classList.remove('show'); $('autoScreen').classList.remove('show'); }
 });
 
-function buildPaytable() {
-  const lb = bet() / M.LINES;
-  $('paytable').innerHTML = M.SYMBOLS.slice(0, 9).map((s, i) => `
-    <div class="pt">${symArt(i, false)}
-    <div><b>${i === M.WILD ? 'Mégaphone (wild)' : s.name}</b>5 : ${fmt(s.pays[5] * lb)}<br>4 : ${fmt(s.pays[4] * lb)}<br>3 : ${fmt(s.pays[3] * lb)}</div></div>`).reverse().join('');
+/* ---------------- Règles et informations ---------------- */
+function buildRules() {
+  const b = bet(), lb = b / M.LINES, x = n => n.toLocaleString('en-US') + '×';
+  const sym = i => `<div class="pt">${symArt(i, false)}<div><b>${nameOf(i)}${i === M.WILD ? ' (wild)' : ''}</b>5: ${fmt(M.SYMBOLS[i].pays[5] * lb)}<br>4: ${fmt(M.SYMBOLS[i].pays[4] * lb)}<br>3: ${fmt(M.SYMBOLS[i].pays[3] * lb)}</div></div>`;
+  const euroVals = M.EURO_VALUES.map(([v]) => '+' + v).join(', ');
+  $('rulesBody').innerHTML = `
+  <h3>Game modes</h3>
+  <table>
+    <tr><th>Mode</th><th>${L.costLbl}</th><th>RTP</th><th>Max win</th></tr>
+    ${MODES.map(m => `<tr><td>${m.label}</td><td>${x(m.cost)} ${L.totalBet} (${fmt(m.cost * b)})</td><td>${m.rtp}</td><td>${x(M.MAX_WIN)} ${L.totalBet} (${fmt(M.MAX_WIN * b)})</td></tr>`).join('')}
+  </table>
+  <p>The RTP (return to player) is the theoretical average return, calculated over a very large number of rounds. The max win is ${x(M.MAX_WIN)} the ${L.totalBet} in every mode. When it is reached, the round ends immediately and the max win is awarded.</p>
+
+  <h3>How to play</h3>
+  <ul>
+    <li>Revolt is played on 5 reels and 3 rows with 20 fixed paylines.</li>
+    <li>Wins ${L.pay} from left to right, starting on the leftmost reel, on adjacent reels.</li>
+    <li>Only the highest win per payline is ${SOCIAL ? 'awarded' : 'paid'}. Wins on different paylines are added together.</li>
+    <li>Barricade wins are added to payline wins.</li>
+    <li>All values shown in this ${L.paytable} are for the current ${L.bet} of ${fmt(b)}.</li>
+  </ul>
+
+  <h3>${L.Paytable}</h3>
+  <div class="paytable">${[M.WILD, 7, 6, 5, 4, 3, 2, 1, 0].map(sym).join('')}</div>
+
+  <h3>Special symbols</h3>
+  <div class="paytable">
+    <div class="pt">${symArt(M.WILD, false)}<div><b>Megaphone (wild)</b>Lands on reels 2, 3 and 4. Substitutes for all symbols except the Barricade and the Golden Euro. When it lands, it fires a slogan and shakes the reels.</div></div>
+    <div class="pt">${symArt(M.SCATTER, false)}<div><b>Barricade (scatter)</b>${L.Pays} anywhere: 3 = ${x(M.SCATTER_PAY[3])}, 4 = ${x(M.SCATTER_PAY[4] || 0)}, 5 = ${x(M.SCATTER_PAY[5])} the ${L.totalBet}. 3, 4 or 5 trigger the General Strike.</div></div>
+    <div class="pt">${symArt(M.EURO, false)}<div><b>Golden Euro</b>Only lands during the General Strike. Shows a value of ${euroVals} that is added to the multiplier.</div></div>
+  </div>
+
+  <h3>General Strike (free spins)</h3>
+  <ul>
+    <li>3, 4 or 5 Barricades award ${M.SCATTER_SPINS[3]}, ${M.SCATTER_SPINS[4]} or ${M.SCATTER_SPINS[5]} free spins, played at the ${L.bet} that triggered them.</li>
+    <li>Every Megaphone that lands expands to cover its whole reel.</li>
+    <li>The multiplier starts at ×1. Each Golden Euro adds its value to the multiplier before the wins of that spin are counted.</li>
+    <li>The multiplier also goes up by 1 after every winning free spin. It never resets during the feature.</li>
+    <li>3 or more Barricades during the feature award ${M.RETRIGGER_SPINS} more free spins.</li>
+  </ul>
+
+  <h3>${L.buyMode}</h3>
+  <ul><li>The General Strike ${L.costs} ${x(M.BONUS_BUY_COST)} the ${L.totalBet} (${fmt(M.BONUS_BUY_COST * b)}). It starts with at least 3 Barricades.</li></ul>
+
+  <h3>Buttons</h3>
+  <dl class="guide">
+    <dt>Spin</dt><dd>Plays one round at the current ${L.bet}. The space bar does the same.</dd>
+    <dt>− / +</dt><dd>Lowers or raises the ${L.bet}.</dd>
+    <dt>${L.buyBtn}</dt><dd>Starts the General Strike straight away for ${x(M.BONUS_BUY_COST)} the ${L.bet}.</dd>
+    <dt>Autoplay</dt><dd>Plays a chosen number of rounds after you confirm. Press Stop at any time.</dd>
+    <dt>Turbo</dt><dd>Speeds up the reels and animations.</dd>
+    <dt>Sound</dt><dd>Turns all sound and music on or off.</dd>
+    <dt>i · Rules</dt><dd>Opens this page.</dd>
+    <dt>Balance / Win</dt><dd>Your current balance, and the win of the current round.</dd>
+  </dl>
+
+  <p class="disclaimer">Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a disconnection, reload the game to complete any unfinished round. The expected return is calculated over many plays. The game display is not representative of any physical device and is for illustrative purposes only. Winnings are settled according to the amount received from the Remote Game Server and not from events within the web browser. TM and © 2026 Revolt. All rights reserved.</p>`;
 }
 
-/* ---------------- Bandeau d'info ---------------- */
+/* ---------------- Bandeau d'infos ---------------- */
 const ticks = [
-  'Gazole : 2,09 € le litre <span class="up">▲</span>', 'Le panier de courses : +23 % en deux ans <span class="up">▲</span>',
-  'Loyer moyen <span class="up">▲</span>', 'Salaires <span>■</span> inchangés', 'Rassemblement place de la République, 18 h',
-  'Facture d\'électricité <span class="up">▲</span>', 'Sous les pavés, la plage', 'Les poubelles brûlent rue de la Roquette',
-  'La baguette à 1,40 € <span class="up">▲</span>', 'Ce qui monte : tout. Ce qui baisse : le moral',
+  'Diesel: €2.09 a litre <span class="up">▲</span>', 'Groceries: +23% in two years <span class="up">▲</span>',
+  'Average rent <span class="up">▲</span>', 'Wages <span>■</span> frozen', 'Rally at Place de la République, 6 pm',
+  'Electricity bill <span class="up">▲</span>', 'Beneath the cobblestones, the beach', 'Bins burning on Rue de la Roquette',
+  'Baguette at €1.40 <span class="up">▲</span>', 'What goes up: everything. What goes down: morale',
 ];
 $('tickerTrack').innerHTML = (ticks.join(' &nbsp;✦&nbsp; ') + ' &nbsp;✦&nbsp; ').repeat(2);
 
-/* ---------------- Fumée et braises ---------------- */
+/* ---------------- Fumée et braises du décor ---------------- */
 let smokeBoost = 0;
 const cv = $('smoke'), cx = cv.getContext('2d');
 let W = 0, H = 0; const puffs = [], embers = [];
 function size() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
 size(); addEventListener('resize', size);
 for (let i = 0; i < 70; i++) embers.push({ x: Math.random() * W, y: Math.random() * H, v: .4 + Math.random() * 1.4, s: 1 + Math.random() * 2.2, p: Math.random() * 6 });
-
-// La fumée du décor prend vie : des panaches partent des feux de l'image de fond.
-// Coordonnées en pixels de l'image d'origine (1375 × 768), recalées comme le « cover » du CSS.
+// Coordonnées en pixels de l'image de fond (1375 × 768), recalées comme le « cover » du CSS.
 const IMG_W = 1375, IMG_H = 768;
-// Fumée fine et discrète, uniquement là où il y a du feu (plus de panache blanc à droite).
 const EMITTERS = [
-  { x: 275, y: 465, rate: .35, vx: -.18, size: 16 },  // poubelle en feu, à gauche
-  { x: 385, y: 185, rate: .15, vx: -.12, size: 11 },  // feu sur le toit à gauche
-  { x: 640, y: 300, rate: .3, vx: -.3, size: 18 },    // panache noir de la tour
-  { x: 695, y: 110, rate: .22, vx: -.25, size: 13 },  // sommet de la tour
-  { x: 1010, y: 540, rate: .35, vx: .12, size: 18 },  // poubelle renversée, à droite
+  { x: 275, y: 465, rate: .35, vx: -.18, size: 16 },
+  { x: 385, y: 185, rate: .15, vx: -.12, size: 11 },
+  { x: 640, y: 300, rate: .3, vx: -.3, size: 18 },
+  { x: 695, y: 110, rate: .22, vx: -.25, size: 13 },
+  { x: 1010, y: 540, rate: .35, vx: .12, size: 18 },
 ];
 const FIRES = [[275, 470, 70], [1010, 560, 90], [690, 120, 40], [640, 320, 45], [385, 190, 30]];
-function mapBg(x, y) {
-  const s = Math.max(W / IMG_W, H / IMG_H);
-  return [(W - IMG_W * s) / 2 + x * s, (H - IMG_H * s) * .35 + y * s, s];
-}
-// Une volute de fumée pré-dessinée : beaucoup de petits nuages très légers, pour un rendu vaporeux
+function mapBg(x, y) { const s = Math.max(W / IMG_W, H / IMG_H); return [(W - IMG_W * s) / 2 + x * s, (H - IMG_H * s) * .35 + y * s, s]; }
 function puffSprite(rgb, seed) {
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const g = c.getContext('2d');
@@ -1043,8 +1007,7 @@ const SPRITES = [puffSprite('40,38,38', 7), puffSprite('58,55,53', 21), puffSpri
 let lastT = 0;
 function frame(t) {
   cx.clearRect(0, 0, W, H);
-  const dt =Math.min(50, t - (lastT || t)) / 16.7; lastT = t;
-  // lueurs des feux qui vacillent
+  const dt = Math.min(50, t - (lastT || t)) / 16.7; lastT = t;
   cx.globalCompositeOperation = 'lighter';
   for (const [fx, fy, fr] of FIRES) {
     const [x, y, s] = mapBg(fx, fy), r = fr * s * (1 + .15 * Math.sin(t / 90 + fx));
@@ -1054,7 +1017,6 @@ function frame(t) {
     cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 2.2, 0, Math.PI * 2); cx.fill();
   }
   cx.globalCompositeOperation = 'source-over';
-  // nouveaux panaches
   for (const e of EMITTERS) {
     if (Math.random() < e.rate * dt * (smokeBoost ? 1.3 : 1)) {
       puffs.push({ e, ox: (Math.random() - .5) * 6, oy: 0, vx: e.vx + (Math.random() - .5) * .12, vy: -(.35 + Math.random() * .3),
@@ -1068,10 +1030,10 @@ function frame(t) {
     if (p.age > p.life) { puffs.splice(i, 1); continue; }
     const k = p.age / p.life;
     const [x, y, s] = mapBg(p.e.x, p.e.y);
-    const size = p.e.size * s * (1 + k * 4.5);
-    const alpha = Math.min(1, p.age / 40) * Math.pow(1 - k, 1.5) * .35;
-    cx.save(); cx.globalAlpha = alpha; cx.translate(x + p.ox * s, y + p.oy * s); cx.rotate(p.rot);
-    cx.drawImage(SPRITES[p.spr], -size, -size, size * 2, size * 2); cx.restore();
+    const sz = p.e.size * s * (1 + k * 4.5);
+    cx.save(); cx.globalAlpha = Math.min(1, p.age / 40) * Math.pow(1 - k, 1.5) * .35;
+    cx.translate(x + p.ox * s, y + p.oy * s); cx.rotate(p.rot);
+    cx.drawImage(SPRITES[p.spr], -sz, -sz, sz * 2, sz * 2); cx.restore();
   }
   const n = smokeBoost ? embers.length : 30;
   for (let i = 0; i < n; i++) {
@@ -1086,6 +1048,9 @@ function frame(t) {
 }
 requestAnimationFrame(frame);
 
+$('betLbl').textContent = L.Bet;
+$('win').textContent = fmt(0);
+msg(`Welcome to the street. <b>20 lines</b>, demo balance, nothing else to lose.`);
 render();
 })();
 </script>
