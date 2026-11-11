@@ -220,8 +220,35 @@ body.strike #stage.portrait #side .promo { display: none; }
 }
 @keyframes slam { from { transform: scaleY(1.6); opacity: 0; } to { transform: none; opacity: 1; } }
 #lines { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
-#lines polyline { fill: none; stroke: var(--red); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round;
-  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000); }
+/* lignes gagnantes : un trait de bombe de peinture rouge, tracé de gauche à droite, avec un cœur jaune */
+#lines polyline { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+#lines polyline.spray { stroke: #e10600; stroke-width: 11; opacity: .92; filter: url(#sprayFx); }
+#lines polyline.core { stroke: #ffd400; stroke-width: 3; filter: drop-shadow(0 0 3px #000); }
+/* mégaphone qui hurle */
+.cell.k-wild.blast img { animation: blast .11s linear 10; }
+@keyframes blast {
+  0% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(-3px, 1px) rotate(-3deg) scale(1.04); }
+  50% { transform: translate(3px, -1px) rotate(2deg) scale(1.06); } 75% { transform: translate(-2px, -1px) rotate(-1deg); }
+}
+.ring {
+  position: absolute; z-index: 8; width: 44px; height: 44px; border-radius: 50%; pointer-events: none;
+  border: 6px solid transparent; border-right-color: #ffd400; border-top-color: rgba(255,212,0,.35); border-bottom-color: rgba(255,212,0,.35);
+  transform: translate(-50%, -50%) scale(.4); animation: ring .85s ease-out forwards; filter: drop-shadow(0 0 6px #ff8a00);
+}
+@keyframes ring { to { transform: translate(-50%, -50%) scale(4.8); opacity: 0; } }
+.bubble {
+  position: absolute; z-index: 9; pointer-events: none; white-space: nowrap;
+  background: var(--paper); color: var(--black); font-family: var(--display); font-size: 28px; text-transform: uppercase;
+  padding: 6px 16px 8px; border: 4px solid var(--black); box-shadow: 5px 5px 0 rgba(0,0,0,.6);
+  transform: translate(-30%, -100%) scale(0); animation: bubble 1.6s cubic-bezier(.3,1.6,.5,1) forwards;
+}
+.bubble::after { content: ''; position: absolute; left: 22px; bottom: -18px; border: 9px solid transparent; border-top: 14px solid var(--black); }
+@keyframes bubble {
+  0% { transform: translate(-30%, -100%) scale(0) rotate(-10deg); }
+  14% { transform: translate(-30%, -100%) scale(1.12) rotate(-4deg); }
+  24%, 80% { transform: translate(-30%, -100%) scale(1) rotate(-4deg); opacity: 1; }
+  100% { transform: translate(-30%, -112%) scale(.92) rotate(-4deg); opacity: 0; }
+}
 #stamp {
   position: absolute; left: 50%; top: 50%; z-index: 6; pointer-events: none; white-space: nowrap;
   font-family: var(--display); text-transform: uppercase; font-size: 50px;
@@ -902,18 +929,56 @@ function spinTo(grid, strips) {
 function drawLines(wins) {
   const svg = $('lines'), m = $('machine');
   svg.setAttribute('viewBox', `0 0 ${m.offsetWidth} ${m.offsetHeight}`);
-  svg.innerHTML = wins.filter(w => w.line !== undefined).map(w => {
+  const defs = '<defs><filter id="sprayFx" x="-5%" y="-20%" width="110%" height="140%">' +
+    '<feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="3" result="n"/>' +
+    '<feDisplacementMap in="SourceGraphic" in2="n" scale="6"/></filter></defs>';
+  svg.innerHTML = defs + wins.filter(w => w.line !== undefined).map(w => {
     const pts = M.PAYLINES[w.line].map((row, r) => { const c = rel(cellAt(r, row), m); return `${c.x + c.w / 2},${c.y + c.h / 2}`; }).join(' ');
-    return `<polyline points="${pts}"/>`;
+    return `<polyline class="spray" points="${pts}"/><polyline class="core" points="${pts}"/>`;
   }).join('');
+  // chaque ligne se trace de gauche à droite, comme un coup de bombe de peinture
+  svg.querySelectorAll('polyline').forEach((pl, i) => {
+    const len = pl.getTotalLength(); pl.style.strokeDasharray = len;
+    pl.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+      { duration: 420, delay: Math.floor(i / 2) * 110, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'backwards' });
+  });
+}
+
+/* ---- le mégaphone hurle quand il fait partie d'un gain ---- */
+const BUBBLES = ['Hear us!', 'On strike!', 'Prices down!', "We won't pay!", 'All together!', 'Wages up!'];
+function megaphoneBlast(cells) {
+  const m = $('machine');
+  cells.slice(0, 3).forEach(([r, row], i) => setTimeout(() => {
+    const cell = cellAt(r, row), c = rel(cell, m);
+    cell.classList.remove('blast'); void cell.offsetWidth; cell.classList.add('blast');
+    for (let k = 0; k < 3; k++) setTimeout(() => {
+      const ring = document.createElement('div'); ring.className = 'ring';
+      ring.style.left = (c.x + c.w * .62) + 'px'; ring.style.top = (c.y + c.h * .42) + 'px';
+      m.appendChild(ring); setTimeout(() => ring.remove(), 900);
+    }, k * 160);
+    if (i === 0) {
+      const b = document.createElement('div'); b.className = 'bubble';
+      b.textContent = BUBBLES[Math.floor(Math.random() * BUBBLES.length)];
+      b.style.left = (c.x + c.w * .5) + 'px'; b.style.top = (c.y + 6) + 'px';
+      m.appendChild(b); setTimeout(() => b.remove(), 1650);
+    }
+    sfx('wild');
+  }, i * 200));
 }
 async function showWins(wins, scatterCells, amount, label) {
   const hits = new Set();
   wins.forEach(w => w.cells.forEach(([r, row]) => hits.add(r + ':' + row)));
   scatterCells.forEach(([r, row]) => hits.add(r + ':' + row));
   if (!hits.size) return;
-  for (let r = 0; r < 5; r++) for (let row = 0; row < 3; row++) cellAt(r, row).classList.add(hits.has(r + ':' + row) ? 'hit' : 'dim');
+  for (let r = 0; r < 5; r++) for (let row = 0; row < 3; row++) {
+    const c = cellAt(r, row);
+    if (hits.has(r + ':' + row)) setTimeout(() => c.classList.add('hit'), r * 90); // la chaîne, bras dessus bras dessous
+    else c.classList.add('dim');
+  }
   drawLines(wins);
+  const wildHits = [];
+  hits.forEach(k => { const [r, row] = k.split(':').map(Number); if (cellAt(r, row).classList.contains('k-wild')) wildHits.push([r, row]); });
+  if (wildHits.length && amount > 0) megaphoneBlast(wildHits.sort((a, b) => a[0] - b[0]));
   if (amount > 0) {
     const x = amount / bet();
     const n = x >= 25 ? 4 : x >= 10 ? 3 : x >= 4 ? 2 : (x >= 1.5 && Math.random() < .35 ? 1 : 0);
