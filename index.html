@@ -979,16 +979,16 @@ let W = 0, H = 0; const puffs = [], embers = [];
 function size() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
 size(); addEventListener('resize', size);
 for (let i = 0; i < 70; i++) embers.push({ x: Math.random() * W, y: Math.random() * H, v: .4 + Math.random() * 1.4, s: 1 + Math.random() * 2.2, p: Math.random() * 6 });
-// Coordonnées en pixels de l'image de fond (1375 × 768), recalées comme le « cover » du CSS.
-const IMG_W = 1375, IMG_H = 768;
+// Coordonnées en pixels de l'image de fond (2000 × 1116, Paris de nuit), recalées comme le « cover » du CSS.
+const IMG_W = 2000, IMG_H = 1116;
 const EMITTERS = [
-  { x: 275, y: 465, rate: .35, vx: -.18, size: 16 },
-  { x: 385, y: 185, rate: .15, vx: -.12, size: 11 },
-  { x: 640, y: 300, rate: .3, vx: -.3, size: 18 },
-  { x: 695, y: 110, rate: .22, vx: -.25, size: 13 },
-  { x: 1010, y: 540, rate: .35, vx: .12, size: 18 },
+  { x: 430, y: 600, rate: .55, vx: .06, size: 30 },  // grande poubelle en feu à gauche : le gros panache noir
+  { x: 445, y: 450, rate: .25, vx: .1, size: 40 },   // le même panache, plus haut
+  { x: 775, y: 515, rate: .25, vx: .16, size: 16 },  // petite fumée derrière la foule, à gauche
+  { x: 1250, y: 480, rate: .25, vx: .1, size: 16 },  // petite fumée derrière la foule, à droite
+  { x: 1400, y: 780, rate: .45, vx: .14, size: 26 }, // feu de la poubelle renversée, à droite
 ];
-const FIRES = [[275, 470, 70], [1010, 560, 90], [690, 120, 40], [640, 320, 45], [385, 190, 30]];
+const FIRES = [[420, 650, 95], [1400, 820, 85], [775, 525, 22], [1250, 490, 22]];
 function mapBg(x, y) { const s = Math.max(W / IMG_W, H / IMG_H); return [(W - IMG_W * s) / 2 + x * s, (H - IMG_H * s) * .35 + y * s, s]; }
 function puffSprite(rgb, seed) {
   const c = document.createElement('canvas'); c.width = c.height = 128;
@@ -1031,7 +1031,7 @@ function frame(t) {
     const k = p.age / p.life;
     const [x, y, s] = mapBg(p.e.x, p.e.y);
     const sz = p.e.size * s * (1 + k * 4.5);
-    cx.save(); cx.globalAlpha = Math.min(1, p.age / 40) * Math.pow(1 - k, 1.5) * .35;
+    cx.save(); cx.globalAlpha = Math.min(1, p.age / 40) * Math.pow(1 - k, 1.5) * .5;
     cx.translate(x + p.ox * s, y + p.oy * s); cx.rotate(p.rot);
     cx.drawImage(SPRITES[p.spr], -sz, -sz, sz * 2, sz * 2); cx.restore();
   }
