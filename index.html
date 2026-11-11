@@ -1073,63 +1073,34 @@ const FIRES = [[420, 650, 95], [1400, 820, 85], [775, 525, 22], [1250, 490, 22]]
 function mapBg(x, y) { const s = Math.max(W / IMG_W, H / IMG_H); return [(W - IMG_W * s) / 2 + x * s, (H - IMG_H * s) * .35 + y * s, s]; }
 
 // Texture de volute : bruit fractal (5 octaves) découpé par un fondu circulaire → bords effilochés, pas de rond net.
-// Bouffée de fumée façon dessin animé, dans le style du décor : bulles rondes qui se chevauchent,
-// éclairées par le haut, ombrées en dessous, avec un contour sombre autour de l'ensemble.
-function cartoonPuff(seed, top, bottom, line) {
+function smokeSprite(rgb, seed) {
   const N = 160, c = document.createElement('canvas'); c.width = c.height = N;
-  const g = c.getContext('2d');
+  const g = c.getContext('2d'), img = g.createImageData(N, N), d = img.data;
   let st = seed; const rnd = () => (st = (st * 16807) % 2147483647) / 2147483647;
-  const blobs = [[80, 84, 30]];
-  const n = 6 + Math.floor(rnd() * 3);
-  for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = 12 + rnd() * 18; blobs.push([80 + Math.cos(a) * d, 84 + Math.sin(a) * d * .7, 17 + rnd() * 14]); }
-  g.fillStyle = line;   for (const [x, y, r] of blobs) { g.beginPath(); g.arc(x, y, r + 3, 0, 6.283); g.fill(); } // contour
-  g.fillStyle = bottom; for (const [x, y, r] of blobs) { g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }     // ombre
-  for (const [x, y, r] of blobs) {                                                                                  // lumière du dessus
-    const gr = g.createRadialGradient(x - r * .3, y - r * .45, r * .05, x, y, r);
-    gr.addColorStop(0, top); gr.addColorStop(.75, top.replace(/[\d.]+\)$/, '0.25)')); gr.addColorStop(1, top.replace(/[\d.]+\)$/, '0)'));
-    g.fillStyle = gr; g.beginPath(); g.arc(x, y - 1, r * .9, 0, 6.283); g.fill();
+  const G = 64, grid = new Float32Array((G + 1) * (G + 1));
+  for (let k = 0; k < grid.length; k++) grid[k] = rnd();
+  const sm = t => t * t * (3 - 2 * t);
+  const vn = (x, y) => {
+    x %= G; y %= G;
+    const xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi), k = yi * (G + 1) + xi;
+    const a = grid[k], b = grid[k + 1], c2 = grid[k + G + 1], e = grid[k + G + 2];
+    return a + (b - a) * xf + (c2 - a) * yf + (a - b - c2 + e) * xf * yf;
+  };
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const nx = x / N, ny = y / N;
+    let f = 0, amp = .5, fr = 3;
+    for (let o = 0; o < 5; o++) { f += amp * vn(nx * fr + o * 5.3, ny * fr + o * 2.7); amp *= .5; fr *= 2; }
+    const dx = nx - .5, dy = ny - .5, r = Math.min(1, Math.sqrt(dx * dx + dy * dy) * 2);
+    let a = Math.pow(1 - r, 1.1);
+    a *= Math.max(0, Math.min(1, (f - .2) * 2.2));
+    const shade = .7 + f * .6, p = (y * N + x) * 4;
+    d[p] = rgb[0] * shade; d[p + 1] = rgb[1] * shade; d[p + 2] = rgb[2] * shade; d[p + 3] = Math.min(255, a * 300);
   }
-  const c2 = document.createElement('canvas'); c2.width = c2.height = N;
-  const g2 = c2.getContext('2d'); g2.filter = 'blur(1.2px)'; g2.drawImage(c, 0, 0);
-  return c2;
+  g.putImageData(img, 0, 0);
+  return c;
 }
-const PUFFS = [11, 29, 47, 83].map(sd => cartoonPuff(sd, 'rgba(138,130,132,1)', 'rgb(62,57,60)', 'rgba(26,20,22,.85)'));
-const LIT = [5, 61].map(sd => cartoonPuff(sd, 'rgba(245,160,70,1)', 'rgb(125,62,30)', 'rgba(60,24,10,.85)')); // bas des panaches éclairé par le feu
-
-// Flammes animées posées sur les feux du décor (coordonnées de l'image) : langues qui ondulent, style dessin animé.
-const FLAMES = [
-  { x: 415, y: 728, w: 150, h: 175, n: 7 },   // grande poubelle à gauche
-  { x: 1395, y: 875, w: 175, h: 135, n: 8 },  // feu de bois devant la poubelle renversée
-  { x: 772, y: 530, w: 26, h: 30, n: 3 },     // petits feux derrière la foule
-  { x: 1248, y: 496, w: 26, h: 30, n: 3 },
-];
-const FLAME_LAYERS = [
-  { k: 1,   c0: 'rgba(214,38,0,.92)',   c1: 'rgba(255,118,0,.9)',   line: 'rgba(70,14,0,.6)' },
-  { k: .68, c0: 'rgba(255,140,0,.96)',  c1: 'rgba(255,214,50,.96)' },
-  { k: .4,  c0: 'rgba(255,230,110,.96)', c1: 'rgba(255,255,225,.96)' },
-];
-function drawFlames(t) {
-  for (const f of FLAMES) {
-    const [x, y, s] = mapBg(f.x, f.y), w = f.w * s, h = f.h * s * (smokeBoost ? 1.15 : 1);
-    for (const L of FLAME_LAYERS) {
-      for (let i = 0; i < f.n; i++) {
-        const u = (i + .5) / f.n - .5;
-        const bx = x + u * w * .85 * L.k;
-        const fl = .78 + .22 * Math.sin(t / 105 + i * 1.7 + f.x) + .12 * Math.sin(t / 43 + i * 3.1 + f.y);
-        const th = h * L.k * Math.max(.3, 1 - Math.abs(u) * 1.5) * fl;
-        const tw = w / f.n * 1.7 * L.k;
-        const sway = Math.sin(t / 170 + i * 2.3 + f.x) * tw * .55;
-        cx.beginPath(); cx.moveTo(bx - tw / 2, y);
-        cx.bezierCurveTo(bx - tw * .7, y - th * .45, bx + sway - tw * .25, y - th * .7, bx + sway, y - th);
-        cx.bezierCurveTo(bx + sway + tw * .2, y - th * .65, bx + tw * .7, y - th * .4, bx + tw / 2, y);
-        cx.closePath();
-        const gr = cx.createLinearGradient(0, y, 0, y - th); gr.addColorStop(0, L.c0); gr.addColorStop(1, L.c1);
-        cx.fillStyle = gr; cx.fill();
-        if (L.line) { cx.strokeStyle = L.line; cx.lineWidth = Math.max(1, 2.2 * s); cx.stroke(); }
-      }
-    }
-  }
-}
+const DARK = [smokeSprite([78, 74, 76], 11), smokeSprite([96, 92, 94], 29), smokeSprite([112, 108, 114], 47), smokeSprite([66, 62, 66], 83)];
+const LIT = [smokeSprite([150, 82, 38], 5), smokeSprite([170, 96, 44], 61)]; // dessous des volutes éclairé par le feu
 let lastT = 0;
 function frame(t) {
   cx.clearRect(0, 0, W, H);
@@ -1144,14 +1115,13 @@ function frame(t) {
     cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 2.2, 0, Math.PI * 2); cx.fill();
   }
   cx.globalCompositeOperation = 'source-over';
-  drawFlames(t);
   // nouvelles volutes
   for (const e of EMITTERS) {
     if (Math.random() < e.rate * .8 * dt * (smokeBoost ? 1.3 : 1)) {
       puffs.push({ e, ox: (Math.random() - .5) * e.size * .5, oy: 0,
         vx: e.vx + (Math.random() - .5) * .15, vy: -(.55 + Math.random() * .45) * e.power,
-        age: 0, life: 380 + Math.random() * 260, rot: (Math.random() - .5) * .6, vr: (Math.random() - .5) * .0015,
-        grow: 2.2 + Math.random() * 1.4, spr: Math.floor(Math.random() * PUFFS.length), lit: Math.floor(Math.random() * LIT.length) });
+        age: 0, life: 420 + Math.random() * 300, rot: Math.random() * 6.28, vr: (Math.random() - .5) * .004,
+        grow: 3.2 + Math.random() * 2.2, spr: Math.floor(Math.random() * DARK.length), lit: Math.floor(Math.random() * LIT.length) });
     }
   }
   // les plus vieilles derrière, les plus jeunes devant
@@ -1167,20 +1137,17 @@ function frame(t) {
     const k = p.age / p.life;
     const [x, y, s] = mapBg(p.e.x, p.e.y);
     const sz = p.e.size * 1.1 * s * (1 + k * p.grow);
-    const alpha = Math.min(1, p.age / 35) * Math.pow(1 - k, 1.3) * .55;
+    const alpha = Math.min(1, p.age / 40) * Math.pow(1 - k, 1.4) * .42;
     cx.save(); cx.translate(x + p.ox * s, y + p.oy * s); cx.rotate(p.rot);
-    cx.globalAlpha = alpha; cx.drawImage(PUFFS[p.spr], -sz, -sz, sz * 2, sz * 2);
-    if (k < .3) { cx.globalAlpha = alpha * (1 - k / .3) * .85; cx.drawImage(LIT[p.lit], -sz, -sz, sz * 2, sz * 2); }
+    cx.globalAlpha = alpha; cx.drawImage(DARK[p.spr], -sz, -sz, sz * 2, sz * 2);
+    if (k < .35) { cx.globalAlpha = alpha * (1 - k / .35) * .7; cx.drawImage(LIT[p.lit], -sz, -sz, sz * 2, sz * 2); }
     cx.restore();
   }
   const n = smokeBoost ? embers.length : 30;
   for (let i = 0; i < n; i++) {
     const e = embers[i];
     e.y -= e.v * (smokeBoost ? 1.8 : 1); e.x += Math.sin(t / 700 + e.p) * .6;
-    if (e.y < -10) {
-      if (Math.random() < .6) { const f = FLAMES[Math.random() < .6 ? 0 : 1], [fx, fy, fs] = mapBg(f.x + (Math.random() - .5) * f.w, f.y - f.h * .5); e.x = fx; e.y = fy; }
-      else { e.y = H + 10; e.x = Math.random() * W; }
-    }
+    if (e.y < -10) { e.y = H + 10; e.x = Math.random() * W; }
     const flick = .5 + .5 * Math.sin(t / 120 + e.p * 5);
     cx.fillStyle = `rgba(255,${120 + flick * 100 | 0},0,${.5 + flick * .5})`;
     cx.fillRect(e.x, e.y, e.s, e.s);
