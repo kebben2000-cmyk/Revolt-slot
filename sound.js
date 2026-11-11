@@ -92,7 +92,7 @@
 
   /* ---------- La foule ---------- */
   const VOWELS = { o: [450, 800], a: [750, 1250], e: [480, 1750], i: [320, 2300], on: [400, 900] };
-  function voices(t, dur, vowel, { vol = .12, n = 10, pitch = [140, 260], glide = 1, pan = 0, a = .05, rev = .45 } = {}) {
+  function voices(t, dur, vowel, { vol = .12, n = 10, pitch = [140, 260], glide = 1, pan = 0, a = .05, rev = .45, far = false } = {}) {
     const [f1, f2] = VOWELS[vowel];
     const sum = ctx.createGain(); sum.gain.value = 1 / Math.sqrt(n);
     for (let i = 0; i < n; i++) {
@@ -101,17 +101,20 @@
       o.frequency.setValueAtTime(f, t);
       if (glide !== 1) o.frequency.exponentialRampToValueAtTime(f * glide, t + dur);
       o.detune.value = R(-35, 35);
-      o.connect(sum); o.start(t + R(0, .06)); o.stop(t + dur + .5);
+      o.connect(sum); o.start(t + R(0, far ? .18 : .06)); o.stop(t + dur + .6);
     }
     const ns = ctx.createBufferSource(); ns.buffer = buffers.pink;
     const ng = ctx.createGain(); ng.gain.value = 1.2; ns.connect(ng).connect(sum);
     ns.start(t, R(0, 3)); ns.stop(t + dur + .5);
     const g = ctx.createGain(); env(g, t, a, vol, Math.max(.08, dur * .6), dur * .4);
-    [[f1, 5], [f2, 6]].forEach(([f, q]) => {
+    [[f1, far ? 3 : 5], [f2, far ? 4 : 6]].forEach(([f, q]) => {
       const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
       sum.connect(bp).connect(g);
     });
-    out(g, { pan, rev });
+    if (far) { // à travers les rues : on perd les aigus, l'écho des façades domine
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = R(700, 1100);
+      g.connect(lp); out(lp, { pan, rev: .9 });
+    } else out(g, { pan, rev });
   }
   const hey = (t, vol = .1, pan = R(-.3, .3)) => voices(t, .2, 'e', { vol, n: 12, pitch: [180, 340], a: .015, pan });
   const ooh = (t, vol = .06) => voices(t, 1.1, 'o', { vol, n: 12, pitch: [160, 280], glide: .72, a: .15, pan: R(-.4, .4) });
@@ -127,36 +130,69 @@
     [['e', .22], ['o', .22], ['i', .22], ['on', .5]],  // « Ré-vo-lu-tion »
     [['o', .3], ['a', .3], ['e', .3], ['o', .55]],     // « Tous en-sem-ble »
   ];
-  function chant(t, vol = .08, reps = 2) {
-    const pat = pick(CHANTS), pan = R(-.6, .6);
+  function chant(t, vol = .08, reps = 2, far = false) {
+    const pat = pick(CHANTS), pan = far ? R(-.95, .95) : R(-.6, .6);
     let tt = t;
     for (let r = 0; r < reps; r++) {
-      for (const [v, d] of pat) { voices(tt, d, v, { vol, pan, n: 12 }); tom(tt, vol * 1.4, pan, .5); tt += d + .08; }
+      for (const [v, d] of pat) { voices(tt, d, v, { vol, pan, n: far ? 22 : 12, far, pitch: far ? [120, 300] : [140, 260] }); tt += d + .08; }
       tt += .4;
     }
   }
 
-  /* ---------- La rue ---------- */
-  // Deux-tons de police (« pin-pon ») avec effet Doppler quand il passe au loin
-  function pinpon(t, { dur = 6, vol = .05, pan = R(-.8, .8), near = false } = {}) {
-    const o1 = ctx.createOscillator(); o1.type = 'triangle';
-    const o2 = ctx.createOscillator(); o2.type = 'square';
-    const m2 = ctx.createGain(); m2.gain.value = .12;
-    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = near ? 3800 : 1300;
-    const g = ctx.createGain();
-    const d0 = near ? 1 : R(1.02, 1.04), d1 = near ? 1 : .96;
-    for (let k = 0, tt = t; tt < t + dur; k++, tt += .62) {
-      const fr = (k % 2 ? 580 : 435) * (d0 + (d1 - d0) * ((tt - t) / dur));
-      o1.frequency.setValueAtTime(fr, tt); o2.frequency.setValueAtTime(fr, tt);
+  // Une manif plus loin dans la rue : on l'entend crier, huer, scander
+  function farProtest(t) {
+    const pan = R(-.95, .95), kind = Math.random();
+    if (kind < .45) chant(t, R(.05, .08), Math.floor(R(2, 4)), true);
+    else if (kind < .8) { // clameur qui monte puis retombe
+      const d = R(1.5, 3);
+      voices(t, d, pick(['a', 'o', 'e']), { vol: R(.04, .07), n: 24, pitch: [130, 380], a: d * .4, pan, far: true });
+      burst('pink', t, d, { filter: 'bandpass', freq: 900, q: .7, vol: .025, a: d * .4, pan, rev: .8 });
+    } else { // huée « hou ! »
+      voices(t, R(1, 1.8), 'o', { vol: R(.04, .06), n: 24, pitch: [110, 240], glide: .85, a: .3, pan, far: true });
     }
+  }
+
+  /* ---------- La rue ---------- */
+  // Sirène deux-tons de police (La 435 Hz / Ré 580 Hz), à la française.
+  // Son de pavillon : onde riche, petit glissé entre les deux notes, résonances du klaxon,
+  // et quand elle passe au loin : Doppler, aigus étouffés, écho des façades.
+  function pinpon(t, { dur = 6, vol = .05, pan = R(-.8, .8), near = false } = {}) {
+    const HALF = .5, GLIDE = .045;
+    const d0 = near ? 1 : R(1.025, 1.04), d1 = near ? 1 : R(.955, .97);
+    const oscs = [0, 7].map(cents => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = cents; return o; });
+    const sq = ctx.createOscillator(); sq.type = 'square';
+    for (let k = 0, tt = t; tt < t + dur + HALF; k++, tt += HALF) {
+      const fr = (k % 2 ? 580 : 435) * (d0 + (d1 - d0) * Math.min(1, (tt - t) / dur));
+      [...oscs, sq].forEach(o => {
+        if (k === 0) o.frequency.setValueAtTime(fr, tt);
+        else { o.frequency.setValueAtTime(o._last, tt); o.frequency.linearRampToValueAtTime(fr, tt + GLIDE); }
+        o._last = fr;
+      });
+    }
+    const mix = ctx.createGain(); mix.gain.value = .5;
+    const sqg = ctx.createGain(); sqg.gain.value = .25;
+    oscs.forEach(o => o.connect(mix)); sq.connect(sqg).connect(mix);
+    const ws = ctx.createWaveShaper(); ws.curve = (() => { const n = 512, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / n * 2 - 1; c[i] = Math.tanh(x * 2.2); } return c; })();
+    const horn = ctx.createGain(); horn.gain.value = 1;
+    [[1050, 2.5, .9], [2350, 3, .5], [3600, 4, .2]].forEach(([f, q, gn]) => {
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+      const bg = ctx.createGain(); bg.gain.value = gn; ws.connect(bp).connect(bg).connect(horn);
+    });
+    const body = ctx.createBiquadFilter(); body.type = 'lowpass'; body.frequency.value = 1600;
+    const bodyG = ctx.createGain(); bodyG.gain.value = .6; ws.connect(body).connect(bodyG).connect(horn);
+    mix.connect(ws);
+    const dist = ctx.createBiquadFilter(); dist.type = 'lowpass';
+    dist.frequency.setValueAtTime(near ? 6000 : 1400, t);
+    if (!near) { dist.frequency.linearRampToValueAtTime(2600, t + dur * .5); dist.frequency.linearRampToValueAtTime(1100, t + dur); }
+    const g = ctx.createGain();
     g.gain.setValueAtTime(.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + dur * (near ? .1 : .45));
-    g.gain.setValueAtTime(vol, t + dur * (near ? .7 : .55));
+    g.gain.exponentialRampToValueAtTime(vol, t + dur * (near ? .08 : .45));
+    g.gain.setValueAtTime(vol, t + dur * (near ? .75 : .55));
     g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    o1.connect(f); o2.connect(m2).connect(f); f.connect(g);
-    const p = out(g, { pan, rev: near ? .3 : .6 });
-    if (p.pan && !near) { p.pan.setValueAtTime(pan, t); p.pan.linearRampToValueAtTime(-pan, t + dur); }
-    o1.start(t); o2.start(t); o1.stop(t + dur + .1); o2.stop(t + dur + .1);
+    horn.connect(dist).connect(g);
+    const p = out(g, { pan, rev: near ? .3 : .75 });
+    if (p.pan && !near) { p.pan.setValueAtTime(pan, t); p.pan.linearRampToValueAtTime(-pan * .6, t + dur); }
+    [...oscs, sq].forEach(o => { o.start(t); o.stop(t + dur + .1); });
   }
   // Sifflet à roulette
   function whistle(t, { vol = .04, pan = R(-.7, .7), pattern = [.12, .12, .45] } = {}) {
@@ -217,10 +253,9 @@
   }
   // Casserolade : plusieurs personnes tapent sur des casseroles, chacune à son rythme
   function pot(t, vol = .08, pan = 0) {
-    const base = R(600, 1400);
-    burst('white', t, .03, { filter: 'bandpass', freq: base * 2.3, q: 6, vol, pan, rev: .35 });
-    [1, 2.76, 5.4].forEach((m, i) =>
-      osc('triangle', base * m * R(.98, 1.02), t, .22 - i * .05, { vol: vol * .45 / (i + 1), a: .001, pan, rev: .35 }));
+    const base = R(1800, 3200);
+    burst('white', t, .035, { filter: 'bandpass', freq: base, q: 2.5, vol, pan, rev: .3 });
+    burst('white', t, .015, { filter: 'highpass', freq: 4000, vol: vol * .5, pan, rev: .2 });
   }
   function casseroles(t, dur = R(3, 6), vol = .06) {
     const n = Math.floor(R(2, 5));
@@ -303,8 +338,7 @@
   }
   function metalHit(t, vol = .09) { // petit impact métallique à l'arrêt
     burst('white', t, .02, { filter: 'highpass', freq: 3000, vol: vol * .6, rev: .15 });
-    osc('triangle', R(1650, 1900), t, .14, { vol, a: .001, rev: .2 });
-    osc('sine', R(2600, 2900), t, .1, { vol: vol * .5, a: .001, rev: .2 });
+    burst('white', t, .04, { filter: 'bandpass', freq: R(1200, 1600), q: 3, vol: vol * .9, rev: .08 });
   }
 
   /* ---------- Montée électro (gains) ---------- */
@@ -446,9 +480,9 @@
     if (Math.random() < .012 * k) whistle(t, { vol: .008 + intensity * .01, pattern: pick([[.12, .12, .4], [.55], [.08, .08, .08, .08]]) });
     if (Math.random() < .03 * k) petard(t, { dist: R(.5, 1), vol: .22 });
     if (Math.random() < .012 * k) firecrackers(t, 8 + Math.floor(R(0, 10)), .05);
-    if (Math.random() < .03 * k) chant(t, .04 + intensity * .035, 2);
+    if (Math.random() < .14 * k) farProtest(t + R(0, .6));
+    if (Math.random() < .02 * k) chant(t, .04 + intensity * .035, 2);
     if (Math.random() < .06) car(t, R(4, 7), .025);
-    if (Math.random() < .012) horn(t);
     if (Math.random() < .25) chatter(t + R(0, .8));
     if (Math.random() < .035 * k) casseroles(t, R(3, 6), .045 + intensity * .03);
     if (Math.random() < .015 * k) drums(t, 2, .08 + intensity * .08);

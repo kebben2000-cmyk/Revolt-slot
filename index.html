@@ -1012,33 +1012,34 @@ for (let i = 0; i < 70; i++) embers.push({ x: Math.random() * W, y: Math.random(
 // La fumée du décor prend vie : des panaches partent des feux de l'image de fond.
 // Coordonnées en pixels de l'image d'origine (1375 × 768), recalées comme le « cover » du CSS.
 const IMG_W = 1375, IMG_H = 768;
+// Fumée fine et discrète, uniquement là où il y a du feu (plus de panache blanc à droite).
 const EMITTERS = [
-  { x: 275, y: 465, rate: .5, dark: true, vx: -.25, size: 46 },  // poubelle en feu, à gauche
-  { x: 385, y: 185, rate: .2, dark: true, vx: -.15, size: 30 },  // feu sur le toit à gauche
-  { x: 640, y: 300, rate: .45, dark: true, vx: -.4, size: 50 },  // panache noir de la tour
-  { x: 695, y: 110, rate: .3, dark: true, vx: -.3, size: 36 },   // sommet de la tour
-  { x: 1010, y: 540, rate: .55, dark: true, vx: .2, size: 54 },  // poubelle renversée, à droite
-  { x: 1170, y: 330, rate: .3, dark: false, vx: .15, size: 60 }, // grand panache gris à droite
-  { x: 1105, y: 640, rate: .4, dark: false, vx: .35, size: 34 }, // fumigène au sol
+  { x: 275, y: 465, rate: .35, vx: -.18, size: 16 },  // poubelle en feu, à gauche
+  { x: 385, y: 185, rate: .15, vx: -.12, size: 11 },  // feu sur le toit à gauche
+  { x: 640, y: 300, rate: .3, vx: -.3, size: 18 },    // panache noir de la tour
+  { x: 695, y: 110, rate: .22, vx: -.25, size: 13 },  // sommet de la tour
+  { x: 1010, y: 540, rate: .35, vx: .12, size: 18 },  // poubelle renversée, à droite
 ];
 const FIRES = [[275, 470, 70], [1010, 560, 90], [690, 120, 40], [640, 320, 45], [385, 190, 30]];
 function mapBg(x, y) {
   const s = Math.max(W / IMG_W, H / IMG_H);
   return [(W - IMG_W * s) / 2 + x * s, (H - IMG_H * s) * .35 + y * s, s];
 }
-// Une bouffée de fumée pré-dessinée, foncée ou claire
-function puffSprite(rgb) {
+// Une volute de fumée pré-dessinée : beaucoup de petits nuages très légers, pour un rendu vaporeux
+function puffSprite(rgb, seed) {
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const g = c.getContext('2d');
-  for (let i = 0; i < 7; i++) {
-    const x = 64 + (Math.random() - .5) * 36, y = 64 + (Math.random() - .5) * 36, r = 24 + Math.random() * 22;
+  let s = seed; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 26; i++) {
+    const ang = rnd() * 6.28, dist = rnd() * 34;
+    const x = 64 + Math.cos(ang) * dist, y = 64 + Math.sin(ang) * dist * .7, r = 8 + rnd() * 20;
     const gr = g.createRadialGradient(x, y, 0, x, y, r);
-    gr.addColorStop(0, `rgba(${rgb},.55)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    gr.addColorStop(0, `rgba(${rgb},.16)`); gr.addColorStop(.6, `rgba(${rgb},.06)`); gr.addColorStop(1, `rgba(${rgb},0)`);
     g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
   }
   return c;
 }
-const SPRITES = { dark: puffSprite('48,46,46'), light: puffSprite('175,172,168'), hot: puffSprite('110,50,30') };
+const SPRITES = [puffSprite('40,38,38', 7), puffSprite('58,55,53', 21), puffSprite('85,70,60', 33)];
 let lastT = 0;
 function frame(t) {
   cx.clearRect(0, 0, W, H);
@@ -1055,10 +1056,10 @@ function frame(t) {
   cx.globalCompositeOperation = 'source-over';
   // nouveaux panaches
   for (const e of EMITTERS) {
-    if (Math.random() < e.rate * dt * (smokeBoost ? 1.5 : 1)) {
-      puffs.push({ e, ox: (Math.random() - .5) * 14, oy: 0, vx: e.vx + (Math.random() - .5) * .25, vy: -(.5 + Math.random() * .5),
-        age: 0, life: 260 + Math.random() * 200, rot: Math.random() * 6.28, vr: (Math.random() - .5) * .01,
-        spr: e.dark ? (Math.random() < .25 ? 'hot' : 'dark') : 'light' });
+    if (Math.random() < e.rate * dt * (smokeBoost ? 1.3 : 1)) {
+      puffs.push({ e, ox: (Math.random() - .5) * 6, oy: 0, vx: e.vx + (Math.random() - .5) * .12, vy: -(.35 + Math.random() * .3),
+        age: 0, life: 300 + Math.random() * 220, rot: Math.random() * 6.28, vr: (Math.random() - .5) * .006,
+        spr: Math.floor(Math.random() * SPRITES.length) });
     }
   }
   for (let i = puffs.length - 1; i >= 0; i--) {
@@ -1067,8 +1068,8 @@ function frame(t) {
     if (p.age > p.life) { puffs.splice(i, 1); continue; }
     const k = p.age / p.life;
     const [x, y, s] = mapBg(p.e.x, p.e.y);
-    const size = p.e.size * s * (1 + k * 3.2);
-    const alpha = Math.min(1, p.age / 25) * (1 - k) * .75;
+    const size = p.e.size * s * (1 + k * 4.5);
+    const alpha = Math.min(1, p.age / 40) * Math.pow(1 - k, 1.5) * .35;
     cx.save(); cx.globalAlpha = alpha; cx.translate(x + p.ox * s, y + p.oy * s); cx.rotate(p.rot);
     cx.drawImage(SPRITES[p.spr], -size, -size, size * 2, size * 2); cx.restore();
   }
