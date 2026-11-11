@@ -1061,9 +1061,9 @@ for (let i = 0; i < 70; i++) embers.push({ x: Math.random() * W, y: Math.random(
 const IMG_W = 2000, IMG_H = 1116;
 // Chaque foyer émet des volutes qui montent, gonflent, s'effilochent et dérivent avec le vent.
 const EMITTERS = [
-  { x: 425, y: 610, rate: .30, vx: .05, size: 34, power: 1 },   // grande poubelle en feu à gauche
-  { x: 470, y: 380, rate: .14, vx: .10, size: 50, power: .9 },  // haut du gros panache noir, qui monte dans le ciel
-  { x: 560, y: 230, rate: .10, vx: .14, size: 60, power: .7 },  // sommet du panache, visible au-dessus de la machine
+  // côté gauche allégé (le panache est déjà dessiné dans le décor) : moins de volutes, plus petites
+  { x: 425, y: 610, rate: .14, vx: .05, size: 24, power: 1 },   // grande poubelle en feu à gauche
+  { x: 470, y: 380, rate: .06, vx: .10, size: 34, power: .9 },  // haut du gros panache noir, qui monte dans le ciel
   { x: 775, y: 520, rate: .12, vx: .12, size: 26, power: 1.1 }, // fumée derrière la foule, à gauche (monte haut)
   { x: 1250, y: 485, rate: .12, vx: .08, size: 26, power: 1.1 },// fumée derrière la foule, à droite (monte haut)
   { x: 1395, y: 790, rate: .24, vx: .12, size: 30, power: .9 }, // feu de la poubelle renversée
