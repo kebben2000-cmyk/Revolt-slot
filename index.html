@@ -59,59 +59,58 @@ body.strike #street::before {
 @keyframes gyro { 0%, 100% { opacity: 0; } 12% { opacity: .55; } 30% { opacity: .1; } 42% { opacity: .45; } 60% { opacity: 0; } }
 body.strike .gyro.blue, body.strike .gyro.red { animation-duration: .6s; }
 
-/* ---------- La scène (taille fixe, mise à l'échelle) ---------- */
-#stage {
-  position: fixed; left: 50%; top: 50%; z-index: 1;
-  width: 1280px; height: 720px; transform-origin: 50% 50%;
-  display: grid; padding: 16px 18px 52px; gap: 14px 20px;
-  grid-template-columns: 270px 1fr 250px;
-  grid-template-rows: auto auto auto 1fr;
-  grid-template-areas:
-    "head   center spin"
-    "bal    center bet"
-    "win    center tools"
-    "msg    center tools";
-}
-#stage.portrait {
-  width: 720px; height: 1280px; padding: 22px 18px 56px; gap: 14px;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto auto auto 1fr;
-  grid-template-areas:
-    "head   head"
-    "center center"
-    "msg    msg"
-    "bal    win"
-    "spin   bet"
-    "tools  tools";
-}
-header { grid-area: head; display: grid; justify-items: start; gap: 8px; align-content: start; }
-#stage.portrait header { justify-items: center; }
+/* ---------- La scène (taille fixe, mise à l'échelle) ----------
+   Paysage 1280×720 : titre centré qui chevauche la grille, grille au centre, panneau du bonus à gauche,
+   bouton BONUS rond en bas à gauche, barre de commandes sous la grille.
+   Portrait 720×1280 : même logique, empilée. */
+#stage { position: fixed; left: 50%; top: 50%; z-index: 1; width: 1280px; height: 720px; transform-origin: 50% 50%; }
+#stage.portrait { width: 720px; height: 1280px; }
+#stage > header, #stage > #center, #stage > #side, #stage > #msg, #stage > #bar, #stage > #buy { position: absolute; }
+
+header { left: 50%; top: 2px; transform: translateX(-50%); z-index: 10; pointer-events: none; }
+#stage.portrait header { top: 34px; }
 .logo {
-  font-family: var(--display); font-size: 78px; line-height: .9; font-weight: normal;
-  text-transform: uppercase; margin: 0; letter-spacing: .01em;
-  background: var(--red); color: var(--paper); padding: 6px 18px 10px;
+  font-family: var(--display); font-size: 92px; line-height: .9; font-weight: normal;
+  text-transform: uppercase; margin: 0; letter-spacing: .02em; white-space: nowrap;
+  background: var(--red); color: var(--paper); padding: 4px 26px 10px;
   transform: rotate(-2deg);
   clip-path: polygon(1% 6%, 12% 0, 40% 5%, 63% 0, 99% 4%, 100% 50%, 98% 96%, 70% 100%, 33% 95%, 4% 100%, 0 55%);
-  text-shadow: 3px 3px 0 var(--black);
+  text-shadow: 4px 4px 0 var(--black);
+  filter: drop-shadow(0 8px 0 rgba(0,0,0,.45));
 }
-#stage.portrait .logo { font-size: 96px; }
+#stage.portrait .logo { font-size: 110px; }
 .logo span { color: var(--yellow); }
-.tagline { margin: 0; background: var(--paper); color: var(--black); padding: 3px 10px; font-size: 15px; transform: rotate(1.2deg); }
 
-#center { grid-area: center; display: grid; align-content: center; justify-items: center; gap: 22px; position: relative; }
-#stage.portrait #center { gap: 18px; }
+#center { left: 50%; top: 92px; transform: translateX(-50%); }
+#stage.portrait #center { top: 182px; }
 
-/* ---------- Bandeau de bonus ---------- */
-#fsbar {
-  display: flex; visibility: hidden; align-items: stretch; gap: 10px; justify-content: center;
-  font-family: var(--display); text-transform: uppercase; height: 58px;
+/* ---------- Panneau de gauche : l'offre du bonus, puis le compteur pendant le bonus ---------- */
+#side {
+  left: 26px; top: 196px; width: 244px;
+  background: rgba(18,18,18,.88); border: 3px solid var(--black); box-shadow: 0 0 0 3px var(--concrete), 0 18px 40px rgba(0,0,0,.5);
+  padding: 16px 16px 18px; text-align: center;
 }
-body.strike #fsbar { visibility: visible; }
-#fsbar > div { padding: 6px 14px; display: grid; justify-items: center; align-content: center; line-height: 1; }
-#fsbar small { font-family: var(--type); text-transform: none; font-size: 12px; margin-top: 4px; }
-.fs-title { background: var(--red); color: var(--paper); font-size: 26px; }
-.fs-left { background: var(--paper); color: var(--black); font-size: 26px; }
-.fs-infl { background: var(--yellow); color: var(--black); font-size: 26px; position: relative; }
+#stage.portrait #side { left: 18px; right: 18px; width: auto; top: 660px; padding: 12px 16px; }
+.tagline { margin: 0 0 10px; background: var(--paper); color: var(--black); padding: 3px 10px; font-size: 14px; display: inline-block; transform: rotate(-1.5deg); }
+#side h3 { font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 34px; line-height: 1; margin: 4px 0 8px; color: var(--yellow); }
+#side p { margin: 6px 0; font-size: 15px; line-height: 1.35; }
+#side p b { color: var(--yellow); font-weight: normal; }
+#side .price { font-family: var(--display); text-transform: uppercase; font-size: 20px; margin-top: 10px; }
+#side .fs { display: none; }
+body.strike #side .promo { display: none; }
+body.strike #side .fs { display: grid; gap: 8px; }
+#stage.portrait #side .promo { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 16px; text-align: left; }
+#stage.portrait #side .promo .tagline, #stage.portrait #side .promo h3 { grid-column: 1; margin: 0; }
+#stage.portrait #side .promo p:not(.tagline) { grid-column: 2; }
+body.strike #stage.portrait #side .promo { display: none; }
+#stage.portrait #side .fs { grid-template-columns: 1.2fr 1fr 1fr 1.4fr; align-items: stretch; }
+.fs > div { padding: 6px 10px; display: grid; justify-items: center; align-content: center; line-height: 1; font-family: var(--display); text-transform: uppercase; }
+.fs small { font-family: var(--type); text-transform: none; font-size: 12px; margin-top: 4px; }
+.fs-title { background: var(--red); color: var(--paper); font-size: 30px; }
+.fs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 !important; }
+#stage.portrait .fs-row { display: contents; }
+.fs-left { background: var(--paper); color: var(--black); font-size: 30px; }
+.fs-infl { background: var(--yellow); color: var(--black); font-size: 30px; }
 .fs-infl.bump { animation: bump .5s; }
 @keyframes bump { 30% { transform: scale(1.25) rotate(-3deg); } }
 
@@ -286,51 +285,78 @@ body.strike #fsbar { visibility: visible; }
   100% { opacity: 1; transform: translate(170%, -50%) rotate(-5deg); }
 }
 
-/* ---------- Message ---------- */
+/* ---------- Message sous la grille ---------- */
 #msg {
-  grid-area: msg; align-self: end; font-size: 16px; line-height: 1.35; color: var(--paper);
-  background: rgba(18,18,18,.72); border-left: 4px solid var(--red); padding: 10px 12px; min-height: 64px;
+  left: 50%; top: 538px; transform: translateX(-50%); width: 680px; text-align: center;
+  font-size: 15px; line-height: 1.3; color: var(--paper); background: rgba(18,18,18,.75); padding: 6px 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-#stage.portrait #msg { text-align: center; border-left: 0; border-top: 4px solid var(--red); min-height: 0; }
+#stage.portrait #msg { top: 612px; width: 684px; white-space: normal; }
 #msg b { color: var(--yellow); font-weight: normal; }
 
-/* ---------- Compteurs et commandes ---------- */
-.meter { background: var(--paper); color: var(--black); padding: 8px 12px; display: grid; gap: 3px; align-content: center; }
-.meter .lbl { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
-.meter output { font-family: var(--display); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+/* ---------- Barre de commandes ---------- */
+#bar {
+  left: 50%; top: 582px; transform: translateX(-50%); width: 800px; height: 92px;
+  display: grid; align-items: center; gap: 0 14px; padding: 0 14px 0 10px;
+  grid-template-columns: 56px 170px 170px 1fr 190px 122px 92px;
+  grid-template-areas: "menu bal win . bet spin tools";
+  background: rgba(18,18,18,.92); border: 3px solid var(--black); box-shadow: 0 0 0 3px var(--concrete), 0 18px 40px rgba(0,0,0,.55);
+}
+#stage.portrait #bar {
+  top: 846px; width: 684px; height: auto; padding: 14px; gap: 14px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-areas: "menu bal win" "bet spin tools";
+}
+#info {
+  grid-area: menu; width: 52px; height: 52px; border: 0; background: transparent; padding: 0;
+  display: grid; gap: 6px; align-content: center; justify-items: center;
+}
+#info span { display: block; width: 34px; height: 5px; background: var(--paper); border-radius: 2px; }
+.meter { display: grid; gap: 2px; align-content: center; }
+.meter .lbl { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #bdb6a6; }
+.meter output { font-family: var(--display); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--paper); white-space: nowrap; }
 #balBox { grid-area: bal; }
-#winBox { grid-area: win; background: var(--yellow); }
-#stage.portrait #winBox { text-align: right; }
-#spinBox { grid-area: spin; display: grid; place-items: center; }
-#betBox { grid-area: bet; }
-.bet-row { display: flex; align-items: center; gap: 8px; }
-.bet-row button {
-  width: 40px; height: 40px; border: 2px solid var(--black); background: var(--black); color: var(--paper);
-  font-family: var(--display); font-size: 24px; line-height: 1; padding: 0;
+#winBox { grid-area: win; }
+#winBox output { color: var(--yellow); }
+#betBox { grid-area: bet; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 8px; background: rgba(255,255,255,.06); padding: 8px 10px; border-left: 4px solid var(--yellow); }
+#betBox .lbl { grid-column: 1; }
+#betBox output { grid-column: 1; grid-row: 2; }
+.bet-arrows { grid-column: 2; grid-row: 1 / 3; display: grid; gap: 4px; }
+.bet-arrows button {
+  width: 36px; height: 26px; border: 0; background: var(--paper); color: var(--black); padding: 0;
+  font-family: var(--display); font-size: 16px; line-height: 1;
 }
-.bet-row button:disabled { opacity: .35; cursor: default; }
-.bet-row output { flex: 1; text-align: center; }
+.bet-arrows button:disabled { opacity: .3; cursor: default; }
+#spinWrap { grid-area: spin; display: grid; place-items: center; }
 #spin {
-  width: 150px; height: 150px; border-radius: 50%; border: 5px solid var(--black);
+  width: 128px; height: 128px; margin-top: -26px; border-radius: 50%; border: 5px solid var(--black);
   background: radial-gradient(circle at 35% 30%, #ff3b2f, var(--red) 45%, var(--red-deep));
-  color: var(--paper); font-family: var(--display); font-size: 32px; text-transform: uppercase; line-height: 1;
-  box-shadow: 0 0 0 5px var(--paper), 0 10px 0 5px var(--black);
+  color: var(--paper); font-family: var(--display); font-size: 30px; text-transform: uppercase; line-height: 1;
+  box-shadow: 0 0 0 5px var(--paper), 0 10px 0 5px var(--black), 0 0 40px rgba(225,6,0,.55);
 }
-#stage.portrait #spin { width: 130px; height: 130px; font-size: 28px; }
+#stage.portrait #spin { margin-top: 0; }
 #spin:disabled { filter: grayscale(.6) brightness(.7); cursor: default; }
 #spin small { display: block; font-family: var(--type); font-size: 12px; text-transform: none; margin-top: 4px; }
-#tools { grid-area: tools; display: grid; gap: 8px; align-content: start; grid-template-columns: 1fr 1fr; }
-#stage.portrait #tools { grid-template-columns: 1fr 1fr 1fr; }
+#barTools { grid-area: tools; display: grid; gap: 5px; }
 .tool {
-  border: 2px solid var(--paper); background: rgba(18,18,18,.6); padding: 10px 8px;
-  text-transform: uppercase; font-size: 14px; letter-spacing: .04em; line-height: 1.2;
+  border: 2px solid var(--paper); background: transparent; padding: 4px 6px;
+  text-transform: uppercase; font-size: 12px; letter-spacing: .04em; line-height: 1.2; white-space: nowrap;
 }
-.tool.wide { grid-column: 1 / -1; }
 .tool[aria-pressed="true"] { background: var(--paper); color: var(--black); }
 .tool:disabled { opacity: .4; cursor: default; }
-#buy { border-color: var(--yellow); color: var(--yellow); }
-#buy:hover:not(:disabled) { background: var(--yellow); color: var(--black); }
-#info { font-family: var(--display); font-size: 18px; }
+
+/* ---------- Bouton BONUS rond (achat du General Strike) ---------- */
+#buy {
+  left: 78px; top: 566px; width: 136px; height: 136px; border-radius: 50%; z-index: 3;
+  border: 5px solid var(--black); background: radial-gradient(circle at 35% 30%, #fff1a0, var(--yellow) 45%, #c99a00);
+  color: var(--black); box-shadow: 0 0 0 5px var(--paper), 0 10px 0 5px var(--black), 0 0 40px rgba(255,212,0,.5);
+  display: grid; place-content: center; transform: rotate(-12deg); padding: 0;
+}
+#buy b { font-family: var(--display); font-weight: normal; font-size: 34px; letter-spacing: .04em; text-transform: uppercase; line-height: 1; }
+#buy small { font-family: var(--display); font-size: 17px; line-height: 1.1; }
+#buy:hover:not(:disabled) { filter: brightness(1.08); }
+#buy:disabled { filter: grayscale(.7) brightness(.7); cursor: default; }
+#stage.portrait #buy { left: auto; right: 34px; top: 1094px; }
 
 /* ---------- Bandeau défilant ---------- */
 #ticker {
@@ -456,16 +482,9 @@ body.strike #fsbar { visibility: visible; }
 <div id="stage">
   <header>
     <h1 class="logo">Rev<span>olt</span></h1>
-    <p class="tagline">Everything goes up. Except wages.</p>
   </header>
 
   <div id="center">
-    <div id="fsbar" aria-live="polite">
-      <div class="fs-title">General Strike</div>
-      <div class="fs-left"><span id="fsLeft">10</span><small>spins left</small></div>
-      <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>multiplier</small></div>
-      <div class="fs-left"><span id="fsWin">0.00</span><small>feature win</small></div>
-    </div>
     <div id="machine">
       <div id="reels"></div>
       <svg id="lines"></svg>
@@ -474,26 +493,46 @@ body.strike #fsbar { visibility: visible; }
     </div>
   </div>
 
+  <aside id="side" aria-live="polite">
+    <div class="promo">
+      <p class="tagline">Everything goes up. Except wages.</p>
+      <h3>General Strike</h3>
+      <p>3 Barricades = <b>10+ free spins</b>. Golden Coins pump up the multiplier, and it never goes down.</p>
+      <p class="price" id="promoPrice"></p>
+    </div>
+    <div class="fs">
+      <div class="fs-title">General Strike</div>
+      <div class="fs-row">
+        <div class="fs-left"><span id="fsLeft">10</span><small>spins left</small></div>
+        <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>multiplier</small></div>
+      </div>
+      <div class="fs-left"><span id="fsWin">0.00</span><small>feature win</small></div>
+    </div>
+  </aside>
+
   <div id="msg" aria-live="polite"></div>
 
-  <div class="meter" id="balBox"><span class="lbl">Balance</span><output id="balance"></output></div>
-  <div class="meter" id="winBox"><span class="lbl">Win</span><output id="win"></output></div>
-  <div id="spinBox"><button id="spin" aria-label="Spin">Spin<small>space</small></button></div>
-  <div class="meter" id="betBox">
-    <span class="lbl" id="betLbl">Bet</span>
-    <div class="bet-row">
-      <button id="betDown" aria-label="Decrease">−</button>
+  <div id="bar">
+    <button id="info" aria-label="Menu: game rules and information"><span></span><span></span><span></span></button>
+    <div class="meter" id="balBox"><span class="lbl">Balance</span><output id="balance"></output></div>
+    <div class="meter" id="winBox"><span class="lbl">Win</span><output id="win"></output></div>
+    <div class="meter" id="betBox">
+      <span class="lbl" id="betLbl">Bet</span>
       <output id="bet"></output>
-      <button id="betUp" aria-label="Increase">+</button>
+      <div class="bet-arrows">
+        <button id="betUp" aria-label="Increase">▲</button>
+        <button id="betDown" aria-label="Decrease">▼</button>
+      </div>
+    </div>
+    <div id="spinWrap"><button id="spin" aria-label="Spin">Spin<small>space</small></button></div>
+    <div id="barTools">
+      <button class="tool" id="auto" aria-pressed="false">Autoplay</button>
+      <button class="tool" id="turbo" aria-pressed="false">Turbo</button>
+      <button class="tool" id="sound" aria-pressed="true">Sound: on</button>
     </div>
   </div>
-  <div id="tools">
-    <button class="tool wide" id="buy"></button>
-    <button class="tool" id="auto" aria-pressed="false">Autoplay</button>
-    <button class="tool" id="turbo" aria-pressed="false">Turbo</button>
-    <button class="tool" id="sound" aria-pressed="true">Sound: on</button>
-    <button class="tool" id="info" aria-label="Game rules and information">i · Rules</button>
-  </div>
+
+  <button id="buy" aria-label="Buy the General Strike feature"></button>
 
   <div id="ticker" aria-hidden="true"><div class="track" id="tickerTrack"></div></div>
 
@@ -834,7 +873,8 @@ async function bigWin(x, amount) {
 function render() {
   $('balance').textContent = fmt(state.balance);
   $('bet').textContent = fmt(bet());
-  $('buy').textContent = `${L.buyBtn} · ${fmt(bet() * M.BONUS_BUY_COST)}`;
+  $('buy').innerHTML = `<b>Bonus</b><small>${fmt(bet() * M.BONUS_BUY_COST)}</small>`;
+  $('promoPrice').innerHTML = `${SOCIAL ? 'Get it now for' : 'Buy it for'} <b>${fmt(bet() * M.BONUS_BUY_COST)}</b>`;
   const lock = state.busy;
   $('spin').disabled = lock;
   $('buy').disabled = lock || state.balance < bet() * M.BONUS_BUY_COST;
@@ -1029,12 +1069,12 @@ function buildRules() {
   <h3>Buttons</h3>
   <dl class="guide">
     <dt>Spin</dt><dd>Plays one round at the current ${L.bet}. The space bar does the same.</dd>
-    <dt>− / +</dt><dd>Lowers or raises the ${L.bet}.</dd>
-    <dt>${L.buyBtn}</dt><dd>Starts the General Strike straight away for ${x(M.BONUS_BUY_COST)} the ${L.bet}.</dd>
+    <dt>▲ / ▼</dt><dd>Lowers or raises the ${L.bet}.</dd>
+    <dt>Bonus</dt><dd>Starts the General Strike straight away for ${x(M.BONUS_BUY_COST)} the ${L.bet}.</dd>
     <dt>Autoplay</dt><dd>Plays a chosen number of rounds after you confirm. Press Stop at any time.</dd>
     <dt>Turbo</dt><dd>Speeds up the reels and animations.</dd>
     <dt>Sound</dt><dd>Turns all sound and music on or off.</dd>
-    <dt>i · Rules</dt><dd>Opens this page.</dd>
+    <dt>☰ Menu</dt><dd>Opens this page.</dd>
     <dt>Balance / Win</dt><dd>Your current balance, and the win of the current round.</dd>
   </dl>
 
