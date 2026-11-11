@@ -1105,14 +1105,23 @@ let lastT = 0;
 function frame(t) {
   cx.clearRect(0, 0, W, H);
   const dt = Math.min(50, t - (lastT || t)) / 16.7; lastT = t;
-  // lueurs des feux qui vacillent
+  // Le feu « vit » par sa lumière : les feux de l'image restent intacts, leur lueur vacille
+  // irrégulièrement (plusieurs fréquences mêlées + petits sursauts) et éclaire le décor autour.
   cx.globalCompositeOperation = 'lighter';
   for (const [fx, fy, fr] of FIRES) {
-    const [x, y, s] = mapBg(fx, fy), r = fr * s * (1 + .15 * Math.sin(t / 90 + fx));
-    const a = .13 + .07 * Math.sin(t / 70 + fy) + .05 * Math.sin(t / 37 + fx) + (smokeBoost ? .08 : 0);
-    const g = cx.createRadialGradient(x, y, 0, x, y, r * 2.2);
-    g.addColorStop(0, `rgba(255,150,40,${a})`); g.addColorStop(1, 'rgba(255,80,0,0)');
-    cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 2.2, 0, Math.PI * 2); cx.fill();
+    const [x, y, s] = mapBg(fx, fy);
+    const flick = Math.sin(t / 73 + fx) * .5 + Math.sin(t / 31 + fy) * .3 + Math.sin(t / 13 + fx * 2) * .2; // entre -1 et 1
+    const burst = Math.pow(Math.max(0, Math.sin(t / 410 + fx)), 8) * .6;  // de temps en temps, le feu s'emballe
+    const k = Math.max(0, .55 + .35 * flick + burst + (smokeBoost ? .25 : 0));
+    const r = fr * s * (1 + .12 * flick + burst * .4);
+    // grande lumière qui déborde sur la rue et les façades
+    let g = cx.createRadialGradient(x, y, 0, x, y, r * 3.4);
+    g.addColorStop(0, `rgba(255,120,30,${.22 * k})`); g.addColorStop(.5, `rgba(255,90,10,${.09 * k})`); g.addColorStop(1, 'rgba(255,60,0,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 3.4, 0, Math.PI * 2); cx.fill();
+    // cœur chaud et lumineux sur le feu lui-même
+    g = cx.createRadialGradient(x, y - r * .25, 0, x, y - r * .25, r * 1.1);
+    g.addColorStop(0, `rgba(255,215,110,${.32 * k})`); g.addColorStop(1, 'rgba(255,140,30,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.arc(x, y - r * .25, r * 1.1, 0, Math.PI * 2); cx.fill();
   }
   cx.globalCompositeOperation = 'source-over';
   // nouvelles volutes
