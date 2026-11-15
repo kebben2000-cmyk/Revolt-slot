@@ -452,6 +452,26 @@ body.strike #stage.portrait #side .promo { display: none; }
 .poster.red { background: var(--red); color: var(--paper); }
 .poster.red h2 { color: var(--yellow); }
 .poster.red .cta { background: var(--paper); color: var(--black); }
+/* gros gains illustrés : l'image s'écrase à gauche, le titre et le montant à droite */
+#bwArt { display: none; }
+#bwPoster.art { display: grid; grid-template-columns: auto 1fr; gap: 26px; align-items: center; max-width: 1040px; text-align: left; padding: 24px; }
+#bwPoster.art #bwArt {
+  display: block; height: 560px; width: auto; border: 6px solid var(--paper); box-shadow: 0 0 0 4px var(--black), 0 20px 40px rgba(0,0,0,.6);
+  transform: rotate(-3deg); animation: artSlam .7s cubic-bezier(.2,1.5,.4,1), artGlow 1.6s .7s ease-in-out infinite alternate;
+}
+#bwPoster.art h2 { font-size: 110px; }
+#bwPoster.art .big { font-size: 76px; }
+@keyframes artSlam {
+  0% { transform: scale(1.8) rotate(-14deg); opacity: 0; filter: brightness(2.5); }
+  55% { transform: scale(.94) rotate(-1deg); opacity: 1; filter: brightness(1.3); }
+  100% { transform: rotate(-3deg); }
+}
+@keyframes artGlow {
+  from { box-shadow: 0 0 0 4px var(--black), 0 20px 40px rgba(0,0,0,.6), 0 0 0 rgba(255,212,0,0); }
+  to   { box-shadow: 0 0 0 4px var(--black), 0 20px 40px rgba(0,0,0,.6), 0 0 46px rgba(255,212,0,.75); }
+}
+#stage.portrait #bwPoster.art { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+#stage.portrait #bwPoster.art #bwArt { height: 620px; }
 .choices { display: flex; gap: 10px; justify-content: center; margin: 18px 0 6px; }
 .choices button { width: 76px; height: 56px; border: 3px solid var(--black); background: transparent; font-family: var(--display); font-size: 26px; color: var(--black); }
 .choices button[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
@@ -607,11 +627,14 @@ body.strike #stage.portrait #side .promo { display: none; }
   <div id="fx" aria-hidden="true"></div>
 
   <!-- Gros gain -->
-  <div class="overlay" id="bigwin"><div class="poster red">
-    <h2 id="bwTitle"></h2>
-    <div class="big" id="bwAmount"></div>
-    <p id="bwSub"></p>
-    <button class="cta" id="bwClose">Continue</button>
+  <div class="overlay" id="bigwin"><div class="poster red" id="bwPoster">
+    <img id="bwArt" alt="" draggable="false">
+    <div class="bw-text">
+      <h2 id="bwTitle"></h2>
+      <div class="big" id="bwAmount"></div>
+      <p id="bwSub"></p>
+      <button class="cta" id="bwClose">Continue</button>
+    </div>
   </div></div>
 
   <!-- Début / fin du General Strike -->
@@ -1098,14 +1121,29 @@ function countUp(el, to, ms) {
     requestAnimationFrame(step);
   });
 }
+// Niveaux de gros gain. art = illustration plein écran (assets/wins/), si elle existe pour ce niveau.
+const BIG_WINS = [
+  { min: M.MAX_WIN, title: 'Max win!', sub: 'The whole country rises. You took it all.', art: 'assets/wins/revolution.webp' },
+  { min: 500, title: 'Revolution!', sub: 'The people take the streets.', art: 'assets/wins/revolution.webp' },
+  { min: 100, title: 'May 68!', sub: 'Beneath the cobblestones, the beach.', art: 'assets/wins/may68.webp' },
+  { min: 30, title: 'Riot!', sub: 'The street has spoken.' },
+  { min: 10, title: 'Heating up!', sub: 'The bins are on fire.' },
+];
+BIG_WINS.forEach(b => { if (b.art) { const i = new Image(); i.src = b.art; } }); // préchargées pour s'afficher sans délai
 async function bigWin(x, amount) {
-  let title = null, sub = '';
-  if (x >= 100) { title = 'May 68!'; sub = 'Beneath the cobblestones, the beach.'; }
-  else if (x >= 30) { title = 'Riot!'; sub = 'The street has spoken.'; }
-  else if (x >= 10) { title = 'Heating up!'; sub = 'The bins are on fire.'; }
-  if (!title) return;
+  const tier = BIG_WINS.find(b => x >= b.min);
+  if (!tier) return;
   sfx('bigwin', x);
-  await overlay('bigwin', () => { $('bwTitle').textContent = title; $('bwSub').textContent = sub; $('bwAmount').textContent = fmt(0); countUp($('bwAmount'), amount, 1400); });
+  if (tier.art) {
+    fireFlash(); restart($('machine'), 'shake');
+    if (x >= 500) { restart(reelsEl, 'quake'); setTimeout(() => sfx('bigwin', x), 900); } // le sommet : double clameur
+  }
+  await overlay('bigwin', () => {
+    $('bwPoster').classList.toggle('art', !!tier.art);
+    if (tier.art) { const a = $('bwArt'); a.style.animation = 'none'; a.src = tier.art; void a.offsetWidth; a.style.animation = ''; }
+    $('bwTitle').textContent = tier.title; $('bwSub').textContent = tier.sub;
+    $('bwAmount').textContent = fmt(0); countUp($('bwAmount'), amount, tier.art ? 2200 : 1400);
+  });
 }
 
 /* ---------------- Interface ---------------- */
