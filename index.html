@@ -76,6 +76,8 @@ body.strike .gyro.blue, body.strike .gyro.red { animation-duration: .6s; }
   -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent 98%); mask-image: linear-gradient(180deg, #000 82%, transparent 98%);
 }
 #stage.portrait #mascot { display: none; }
+#mascot video, #mascot canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 0; }
+#mascotCv { display: none; }
 #mascot.cheer { animation: cheer .55s cubic-bezier(.3,1.6,.5,1) 2; }
 @keyframes cheer {
   0% { transform: none; }
@@ -601,7 +603,7 @@ body.strike #stage.portrait #side .promo { display: none; }
   </div>
 
   <button id="buy" aria-label="Buy the General Strike feature"></button>
-  <canvas id="mascot" width="340" height="444" aria-hidden="true"></canvas>
+  <div id="mascot" aria-hidden="true"><video id="mascotVid" muted loop playsinline autoplay preload="auto" disablepictureinpicture></video><canvas id="mascotCv" width="340" height="444"></canvas></div>
   <div id="fx" aria-hidden="true"></div>
 
   <!-- Gros gain -->
@@ -714,32 +716,41 @@ function rel(el, parent) {
   return { x: (a.left - b.left) / scale, y: (a.top - b.top) / scale, w: a.width / scale, h: a.height / scale };
 }
 
-// Animation du chat : 122 images rangées sur 2 planches, décodées UNE fois, puis dessinées dans un canvas.
-// Lecture en aller-retour (pas de saut au raccord) avec un léger fondu entre deux images pour la fluidité.
+// Animation du chat.
+// Lecture principale : une vidéo transparente (WebM VP9 + alpha, 24 images/s, montée en aller-retour pour
+// une boucle sans saut), décodée par le lecteur vidéo du navigateur : fluide et sans charge pour le jeu.
+// Safari ne gère pas la transparence de ce format : il reçoit les planches d'images à la place.
 const MASCOT_ANIM = { sheets: ['assets/mascot/chat-sheet-1.webp', 'assets/mascot/chat-sheet-2.webp'], frames: 122, per: 61, cols: 12, w: 340, h: 444, fps: 12 };
-function placeMascot() {} // le chat est maintenant dans la scène, placé par le CSS
+function placeMascot() {} // le chat est dans la scène, placé par le CSS
 (function mascotPlayer() {
-  const cv = $('mascot'), g = cv.getContext('2d'), A = MASCOT_ANIM;
-  let bitmaps = null, t0 = 0;
-  Promise.all(A.sheets.map(src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; })))
-    .then(imgs => Promise.all(imgs.map(im => (window.createImageBitmap ? createImageBitmap(im) : Promise.resolve(im)))))
-    .then(bm => { bitmaps = bm; t0 = performance.now(); requestAnimationFrame(draw); })
-    .catch(() => { cv.style.display = 'none'; });
-  function frameRect(i) {
-    const sheet = Math.floor(i / A.per), k = i % A.per;
-    return [bitmaps[sheet], (k % A.cols) * A.w, Math.floor(k / A.cols) * A.h];
+  const vid = $('mascotVid'), cv = $('mascotCv');
+  const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+  if (!isSafari && vid.canPlayType('video/webm; codecs="vp9"')) {
+    vid.src = 'assets/mascot/chat-loop.webm';
+    const go = () => vid.play().catch(() => addEventListener('pointerdown', () => vid.play().catch(() => {}), { once: true }));
+    go();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) go(); });
+    vid.addEventListener('error', fallback, { once: true });
+    return;
   }
-  function draw(now) {
-    requestAnimationFrame(draw); // programmé d'abord : une erreur ponctuelle n'arrête plus l'animation
-    if (cv.offsetParent !== null) { // rien à dessiner s'il est masqué (portrait)
-      const period = (A.frames - 1) * 2;                 // aller puis retour
-      const pos = (Math.max(0, now - t0) / 1000 * A.fps) % period; // jamais négatif (la 1re image peut arriver « avant » t0)
-      const p = pos < A.frames - 1 ? pos : period - pos;  // position dans 0 … frames-1
-      const i = Math.floor(p), f = p - i, j = Math.min(A.frames - 1, i + 1);
+  fallback();
+  function fallback() {
+    vid.removeAttribute('src'); vid.style.display = 'none'; cv.style.display = 'block';
+    const g = cv.getContext('2d'), A = MASCOT_ANIM;
+    let bitmaps = null, t0 = 0, last = -1;
+    Promise.all(A.sheets.map(src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; })))
+      .then(imgs => Promise.all(imgs.map(im => (window.createImageBitmap ? createImageBitmap(im) : Promise.resolve(im)))))
+      .then(bm => { bitmaps = bm; t0 = performance.now(); requestAnimationFrame(draw); })
+      .catch(() => { cv.style.display = 'none'; });
+    function draw(now) {
+      requestAnimationFrame(draw);
+      if (cv.offsetParent === null) return;
+      const period = (A.frames - 1) * 2, pos = Math.floor(Math.max(0, now - t0) / 1000 * A.fps) % period;
+      const i = pos < A.frames - 1 ? pos : period - pos;   // aller-retour
+      if (i === last) return; last = i;                   // on ne redessine que quand l'image change
+      const sheet = Math.floor(i / A.per), k = i % A.per;
       g.clearRect(0, 0, A.w, A.h);
-      let [bm, x, y] = frameRect(i);
-      g.globalAlpha = 1; g.drawImage(bm, x, y, A.w, A.h, 0, 0, A.w, A.h);
-      if (f > .05) { [bm, x, y] = frameRect(j); g.globalAlpha = f; g.drawImage(bm, x, y, A.w, A.h, 0, 0, A.w, A.h); }
+      g.drawImage(bitmaps[sheet], (k % A.cols) * A.w, Math.floor(k / A.cols) * A.h, A.w, A.h, 0, 0, A.w, A.h);
     }
   }
 })();
