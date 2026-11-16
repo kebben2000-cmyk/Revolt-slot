@@ -7,28 +7,28 @@
       "weights": "lookUpTable_base_0.csv"
     },
     {
-      "name": "hunt",
+      "name": "riot_hunt",
       "cost": 3,
-      "events": "books_hunt.jsonl.zst",
-      "weights": "lookUpTable_hunt_0.csv"
+      "events": "books_riot_hunt.jsonl.zst",
+      "weights": "lookUpTable_riot_hunt_0.csv"
     },
     {
-      "name": "superhunt",
+      "name": "super_riot_hunt",
       "cost": 10,
-      "events": "books_superhunt.jsonl.zst",
-      "weights": "lookUpTable_superhunt_0.csv"
+      "events": "books_super_riot_hunt.jsonl.zst",
+      "weights": "lookUpTable_super_riot_hunt_0.csv"
     },
     {
-      "name": "bonus",
+      "name": "general_strike",
       "cost": 72,
-      "events": "books_bonus.jsonl.zst",
-      "weights": "lookUpTable_bonus_0.csv"
+      "events": "books_general_strike.jsonl.zst",
+      "weights": "lookUpTable_general_strike_0.csv"
     },
     {
-      "name": "superbonus",
+      "name": "super_strike",
       "cost": 220,
-      "events": "books_superbonus.jsonl.zst",
-      "weights": "lookUpTable_superbonus_0.csv"
+      "events": "books_super_strike.jsonl.zst",
+      "weights": "lookUpTable_super_strike_0.csv"
     }
   ]
 }

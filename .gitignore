@@ -3,3 +3,4 @@ node_modules/
 Thumbs.db
 math/publish/*.zst
 math/publish/*.csv
+stake-upload/

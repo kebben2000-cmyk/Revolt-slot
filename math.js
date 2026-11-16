@@ -42,12 +42,12 @@
   // startMult = multiplicateur de départ du General Strike.
   const MODES = {
     base:       { cost: 1,   force: 0,     startMult: 1 },
-    hunt:       { cost: 3,   force: 0.0275, startMult: 1 },  // Riot Hunt : bonus ~6× plus souvent
-    superhunt:  { cost: 10,  force: 0.1246, startMult: 1 },  // Super Riot Hunt : bonus ~24× plus souvent
-    bonus:      { cost: 72,  force: 1,      startMult: 1 },  // General Strike (achat)
-    superbonus: { cost: 220, force: 1,      startMult: 10 }, // Super Strike (achat) : démarre à ×10
+    riot_hunt:       { cost: 3,   force: 0.0275, startMult: 1 },  // Riot Hunt : bonus ~6× plus souvent
+    super_riot_hunt:  { cost: 10,  force: 0.1246, startMult: 1 },  // Super Riot Hunt : bonus ~24× plus souvent
+    general_strike:      { cost: 72,  force: 1,      startMult: 1 },  // General Strike (achat)
+    super_strike: { cost: 220, force: 1,      startMult: 10 }, // Super Strike (achat) : démarre à ×10
   };
-  const BONUS_BUY_COST = MODES.bonus.cost;
+  const BONUS_BUY_COST = MODES.general_strike.cost;
 
   const PAYLINES = [
     [1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],
@@ -187,7 +187,7 @@
   // opts.grid : grille de base déjà tirée (utilisé par les outils de génération pour chercher le gain max)
   function playRound(mode, rng, opts) {
     rng = rng || Math.random;
-    if (mode === 'buy') mode = 'bonus';
+    if (mode === 'buy') mode = 'general_strike';
     const cfg = MODES[mode] || MODES.base;
     const forced = cfg.force >= 1 || (cfg.force > 0 && rng() < cfg.force);
     const grid = (opts && opts.grid) || drawGrid(STRIPS_BASE, rng, forced);

@@ -25,6 +25,7 @@ Puis ouvrir http://localhost:3068.
 | `rgs.js` | Client du serveur de jeu Stake Engine (authenticate, play, end-round, replay) |
 | `math-summary.js` | RTP et gain max réels par mode (généré) |
 | `tools/export-math.js` | Génère les maths au format Stake : `node tools/export-math.js` |
+| `tools/make-upload.js` | Prépare `stake-upload/` (front, math, tile) à déposer sur Stake Engine |
 | `math/publish/` | Fichiers de maths à déposer sur Stake Engine (≈70 Mo, non versionnés : `node tools/export-math.js`, ~6 min) |
 | `assets/symbols/` | Symboles détourés (PNG 512×512, fond transparent) |
 | `assets/bg.jpg` | Décor de fond (version allégée) |
