@@ -467,8 +467,10 @@ body.strike #stage.portrait #side .promo { display: none; }
   object-fit: cover; filter: blur(22px) brightness(.62) saturate(1.25);
 }
 #bwPoster.art #bwArt {
-  display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%;
-  filter: drop-shadow(0 0 30px rgba(0,0,0,.7));
+  /* entre-deux : l'image occupe ~62 % de la largeur, un peu rognée en haut et en bas, bords fondus dans le flou */
+  display: block; position: absolute; top: 0; left: 19%; width: 62%; height: 100%; object-fit: cover; object-position: 50% 42%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
   animation: artSlam .8s cubic-bezier(.2,1.2,.4,1), artZoom 9s .8s ease-out forwards;
 }
 #bwPoster.art::after { /* assombrit le centre et les bords pour que le montant ressorte */
