@@ -452,26 +452,40 @@ body.strike #stage.portrait #side .promo { display: none; }
 .poster.red { background: var(--red); color: var(--paper); }
 .poster.red h2 { color: var(--yellow); }
 .poster.red .cta { background: var(--paper); color: var(--black); }
-/* gros gains illustrés : l'image s'écrase à gauche, le titre et le montant à droite */
+/* gros gains illustrés : l'illustration remplit tout l'écran, le montant géant au centre */
 #bwArt { display: none; }
-#bwPoster.art { display: grid; grid-template-columns: auto 1fr; gap: 26px; align-items: center; max-width: 1040px; text-align: left; padding: 24px; }
+#bigwin.art { padding: 0; }
+#bwPoster.art {
+  position: absolute; inset: 0; max-width: none; width: 100%; height: 100%; padding: 0;
+  clip-path: none; background: #000; overflow: hidden; display: grid; place-items: center; text-align: center;
+  animation: none;
+}
 #bwPoster.art #bwArt {
-  display: block; height: 560px; width: auto; border: 6px solid var(--paper); box-shadow: 0 0 0 4px var(--black), 0 20px 40px rgba(0,0,0,.6);
-  transform: rotate(-3deg); animation: artSlam .7s cubic-bezier(.2,1.5,.4,1), artGlow 1.6s .7s ease-in-out infinite alternate;
+  display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%;
+  animation: artSlam .8s cubic-bezier(.2,1.2,.4,1), artZoom 9s .8s ease-out forwards;
 }
-#bwPoster.art h2 { font-size: 110px; }
-#bwPoster.art .big { font-size: 76px; }
-@keyframes artSlam {
-  0% { transform: scale(1.8) rotate(-14deg); opacity: 0; filter: brightness(2.5); }
-  55% { transform: scale(.94) rotate(-1deg); opacity: 1; filter: brightness(1.3); }
-  100% { transform: rotate(-3deg); }
+#bwPoster.art::after { /* assombrit le centre et les bords pour que le montant ressorte */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 45% at 50% 52%, rgba(0,0,0,.55), rgba(0,0,0,.15) 70%),
+              linear-gradient(180deg, rgba(0,0,0,.35), transparent 30%, transparent 70%, rgba(0,0,0,.6));
 }
-@keyframes artGlow {
-  from { box-shadow: 0 0 0 4px var(--black), 0 20px 40px rgba(0,0,0,.6), 0 0 0 rgba(255,212,0,0); }
-  to   { box-shadow: 0 0 0 4px var(--black), 0 20px 40px rgba(0,0,0,.6), 0 0 46px rgba(255,212,0,.75); }
+#bwPoster.art .bw-text { position: relative; z-index: 2; display: grid; justify-items: center; gap: 4px; }
+#bwPoster.art h2 {
+  font-size: 84px; color: var(--yellow); background: var(--red); padding: 2px 26px 8px; transform: rotate(-3deg);
+  text-shadow: 4px 4px 0 var(--black); box-shadow: 0 10px 0 rgba(0,0,0,.45); animation: titleIn .6s .25s cubic-bezier(.3,1.7,.5,1) backwards;
 }
-#stage.portrait #bwPoster.art { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-#stage.portrait #bwPoster.art #bwArt { height: 620px; }
+#bwPoster.art .big {
+  font-size: 170px; line-height: 1; margin: 6px 0 0; color: #fff;
+  text-shadow: 0 0 30px rgba(255,180,0,.85), 6px 6px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+  animation: amountPulse 1.1s .9s ease-in-out infinite alternate;
+}
+#bwPoster.art p { color: #fff; font-size: 20px; text-shadow: 0 2px 6px #000, 0 0 3px #000; }
+#bwPoster.art .cta { background: var(--yellow); color: var(--black); box-shadow: 0 6px 0 #000; }
+@keyframes artSlam { 0% { transform: scale(1.5); filter: brightness(3) blur(6px); opacity: 0; } 60% { filter: brightness(1.4) blur(0); opacity: 1; } 100% { transform: scale(1.04); } }
+@keyframes artZoom { to { transform: scale(1.14); } } /* lent zoom de caméra pendant que le montant monte */
+@keyframes titleIn { from { transform: scale(0) rotate(-20deg); } }
+@keyframes amountPulse { to { transform: scale(1.06); text-shadow: 0 0 50px rgba(255,212,0,1), 6px 6px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; } }
+#stage.portrait #bwPoster.art .big { font-size: 130px; }
 .choices { display: flex; gap: 10px; justify-content: center; margin: 18px 0 6px; }
 .choices button { width: 76px; height: 56px; border: 3px solid var(--black); background: transparent; font-family: var(--display); font-size: 26px; color: var(--black); }
 .choices button[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
@@ -1138,7 +1152,7 @@ async function bigWin(x, amount) {
     if (x >= 100) { restart(reelsEl, 'quake'); setTimeout(() => sfx('bigwin', x), 900); } // les plus gros : double clameur
   }
   await overlay('bigwin', () => {
-    $('bwPoster').classList.toggle('art', !!tier.art);
+    $('bwPoster').classList.toggle('art', !!tier.art); $('bigwin').classList.toggle('art', !!tier.art);
     if (tier.art) { const a = $('bwArt'); a.style.animation = 'none'; a.src = tier.art; void a.offsetWidth; a.style.animation = ''; }
     $('bwTitle').textContent = tier.title; $('bwSub').textContent = tier.sub;
     $('bwAmount').textContent = fmt(0); countUp($('bwAmount'), amount, tier.art ? 2200 : 1400);
