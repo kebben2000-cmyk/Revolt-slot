@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Revolt</title>
 <style>
 /* Un seul univers : nuit de manif, affiche sérigraphiée sur béton.
@@ -27,6 +27,7 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; overflow: hidden; }
 body {
+  touch-action: manipulation;
   background: var(--black); color: var(--paper); font-family: var(--type);
   -webkit-tap-highlight-color: transparent; user-select: none;
 }
@@ -529,6 +530,10 @@ body.strike #stage.portrait #side .promo { display: none; }
 .cell.hitfx { animation: hitfx .38s cubic-bezier(.3,1.6,.5,1); }
 @keyframes hitfx { 0% { transform: scale(.88) rotate(-3deg); } 40% { transform: scale(1.04) rotate(2deg); } 100% { transform: none; } }
 
+/* mode replay : aucune commande de mise */
+body.replay #buy, body.replay #barTools, body.replay .bet-arrows, body.replay #side .price { display: none !important; }
+body.replay #balBox .lbl::after { content: ' (replay)'; }
+
 @media (prefers-reduced-motion: reduce) {
   #machine.shake, #reels.thump, #reels.quake { animation: none; }
 }
@@ -683,6 +688,22 @@ body.strike #stage.portrait #side .promo { display: none; }
     <button class="cta" id="autoStart">Start autoplay</button>
   </div></div>
 
+  <!-- Confirmation de l'achat du bonus (coûte plus de 2× la mise) -->
+  <div class="overlay" id="buyScreen" role="dialog" aria-labelledby="buyTitle"><div class="poster">
+    <h2 id="buyTitle" style="font-size:64px">General Strike</h2>
+    <p id="buyText"></p>
+    <div class="big" id="buyCost"></div>
+    <button class="alt" id="buyCancel">Cancel</button>
+    <button class="cta" id="buyConfirm"></button>
+  </div></div>
+
+  <!-- Erreur bloquante (serveur injoignable, session expirée, replay introuvable) -->
+  <div class="overlay" id="errScreen" role="alertdialog" aria-labelledby="errTitle"><div class="poster">
+    <h2 id="errTitle" style="font-size:56px">Connection problem</h2>
+    <p id="errText"></p>
+    <button class="cta" id="errReload">Reload</button>
+  </div></div>
+
   <!-- Règles et informations -->
   <div class="overlay" id="rules" role="dialog" aria-labelledby="rulesTitle"><div class="poster">
     <button class="close" id="rulesClose">Close</button>
@@ -692,6 +713,8 @@ body.strike #stage.portrait #side .promo { display: none; }
 </div>
 
 <script src="math.js"></script>
+<script src="math-summary.js"></script>
+<script src="rgs.js"></script>
 <script src="sound.js"></script>
 <script>
 (() => {
@@ -701,45 +724,69 @@ const KEYS = M.SYMBOLS.map(s => s.key);
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
 
-/* ---------------- Paramètres de lancement (comme sur Stake Engine) ----------------
-   ?social=true  → vocabulaire Stake.us (play au lieu de bet, etc.)
-   ?currency=USD → devise d'affichage (XGC / XSC pour les jetons de Stake.us)                */
+/* ---------------- Lancement (paramètres d'URL Stake Engine) ----------------
+   ?sessionID=…&rgs_url=…  → jeu réel branché sur le serveur Stake (RGS)
+   ?replay=true&game=…&version=…&mode=…&event=…&rgs_url=…&amount=… → replay d'une partie
+   sans ces paramètres     → démo locale (maths de math.js, solde fictif)
+   social=true / currency=… / lang=… sont toujours pris en compte (anglais pour toute langue). */
 const params = new URLSearchParams(location.search);
-const SOCIAL = params.get('social') === 'true';
-const CURRENCY = (params.get('currency') || (SOCIAL ? 'XGC' : 'USD')).toUpperCase();
+const MICRO = RGS.MICRO;
+const REPLAY = params.get('replay') === 'true';
+const RGS_MODE = !REPLAY && !!(params.get('rgs_url') && params.get('sessionID'));
+let api = null;
+let SOCIAL = params.get('social') === 'true';
+let CURRENCY = (params.get('currency') || (SOCIAL ? 'XGC' : 'USD')).toUpperCase();
 
 // Mots qui changent en mode social (liste des termes interdits sur Stake.us)
-const L = SOCIAL ? {
-  bet: 'play', Bet: 'Play', bets: 'plays', totalBet: 'total play amount', TotalBet: 'Total play amount',
-  pays: 'wins', Pays: 'Wins', pay: 'win', paytable: 'win table', Paytable: 'Win table',
-  buyBtn: 'Get General Strike', buyMode: 'General Strike feature', costLbl: 'Played for', costs: 'can be played for',
-  bought: 'General Strike instantly triggered.', insufficient: 'Not enough coins. Lower your play amount.',
-} : {
-  bet: 'bet', Bet: 'Bet', bets: 'bets', totalBet: 'total bet', TotalBet: 'Total bet',
-  pays: 'pays', Pays: 'Pays', pay: 'pay', paytable: 'paytable', Paytable: 'Paytable',
-  buyBtn: 'Buy General Strike', buyMode: 'Bonus buy', costLbl: 'Cost', costs: 'costs',
-  bought: 'General Strike bought. The barricades are going up.', insufficient: 'Insufficient balance. Lower your bet.',
-};
+function wordsFor(social) {
+  return social ? {
+    bet: 'play', Bet: 'Play', bets: 'plays', totalBet: 'total play amount', TotalBet: 'Total play amount',
+    pays: 'wins', Pays: 'Wins', pay: 'win', paytable: 'win table', Paytable: 'Win table',
+    buyBtn: 'Get General Strike', buyMode: 'General Strike feature', costLbl: 'Played for', costs: 'can be played for',
+    bought: 'General Strike instantly triggered.', insufficient: 'Not enough coins. Lower your play amount.',
+    confirmQ: 'Get the General Strike for', confirmBtn: 'Get bonus', limits: 'Play limits reached.',
+  } : {
+    bet: 'bet', Bet: 'Bet', bets: 'bets', totalBet: 'total bet', TotalBet: 'Total bet',
+    pays: 'pays', Pays: 'Pays', pay: 'pay', paytable: 'paytable', Paytable: 'Paytable',
+    buyBtn: 'Buy General Strike', buyMode: 'Bonus buy', costLbl: 'Cost', costs: 'costs',
+    bought: 'General Strike bought. The barricades are going up.', insufficient: 'Insufficient balance. Lower your bet.',
+    confirmQ: 'Buy the General Strike for', confirmBtn: 'Buy bonus', limits: 'Gambling limits reached.',
+  };
+}
+let L = wordsFor(SOCIAL);
+function setSocial(v) { SOCIAL = !!v; L = wordsFor(SOCIAL); if ($('betLbl')) $('betLbl').textContent = L.Bet; }
 
 // Noms des symboles affichés (anglais, seule langue obligatoire)
 const NAMES = { bidon: 'Fuel Can', portefeuille: 'Empty Wallet', ticket: 'Receipt', gilet: 'Yellow Vest', pave: 'Cobblestone',
   fumigene: 'Smoke Flare', poubelle: 'Burning Bin', crs: 'Riot Helmet', wild: 'Megaphone', scatter: 'Barricade', euro: 'Golden Coin' };
 const nameOf = sym => NAMES[KEYS[sym]];
 
-// Chiffres déclarés dans les règles (issus des simulations — à recalculer avec le Math SDK de Stake)
-const MODES = [
-  { id: 'base', label: 'Base game', cost: 1, rtp: '96.2%' },
-  { id: 'buy', label: L.buyMode, cost: M.BONUS_BUY_COST, rtp: '96.0%' },
+// RTP et gain max par mode : calculés depuis les fichiers de maths publiés (math-summary.js)
+const MS = window.REVOLT_MATH_SUMMARY || { base: { cost: 1, rtp: 96, maxWin: M.MAX_WIN }, bonus: { cost: M.BONUS_BUY_COST, rtp: 96, maxWin: M.MAX_WIN } };
+const modes = () => [
+  { id: 'base', label: 'Base game', cost: MS.base.cost, rtp: MS.base.rtp.toFixed(2) + '%', maxWin: MS.base.maxWin },
+  { id: 'buy', label: L.buyMode, cost: MS.bonus.cost, rtp: MS.bonus.rtp.toFixed(2) + '%', maxWin: MS.bonus.maxWin },
 ];
 
-const BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
-const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true };
-const DISPLAY_DECIMALS = { JPY: 0, KRW: 0, IDR: 0, VND: 0, CLP: 0 };
+// Mises : en démo une liste fixe ; avec le serveur, uniquement celles renvoyées par /wallet/authenticate [242]
+let BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
+const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false };
+
+// Devises [219] et montants inférieurs au centime [273]
+const CUR = {
+  USD: ['$', 2, 1], EUR: ['€', 2, 1], GBP: ['£', 2, 1], CAD: ['CA$', 2, 1], AUD: ['A$', 2, 1], MXN: ['MX$', 2, 1], BRL: ['R$', 2, 1],
+  JPY: ['¥', 0, 1], KRW: ['₩', 0, 1], INR: ['₹', 2, 1], IDR: ['Rp', 0, 1], VND: ['₫', 0, 0], CLP: ['CLP$', 0, 1],
+  USDT: [' USDT', 2, 0], USDC: [' USDC', 2, 0], BTC: [' BTC', 6, 0], ETH: [' ETH', 6, 0], LTC: [' LTC', 6, 0],
+  XSC: [' SC', 2, 0], XGC: [' GC', 2, 0], XEC: [' SC', 2, 0],
+};
 function fmt(v) {
-  if (CURRENCY === 'XGC' || CURRENCY === 'XSC') return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (CURRENCY === 'XGC' ? ' GC' : ' SC');
-  const d = DISPLAY_DECIMALS[CURRENCY] ?? 2;
-  try { return v.toLocaleString('en-US', { style: 'currency', currency: CURRENCY, minimumFractionDigits: d, maximumFractionDigits: d }); }
-  catch (e) { return v.toFixed(2) + ' ' + CURRENCY; }
+  const c = CUR[CURRENCY] || [' ' + CURRENCY, 2, 0];
+  let d = c[1];
+  const a = Math.abs(v);
+  while (a > 0 && d < 8 && a < Math.pow(10, -d)) d++;            // jamais « 0.00 » pour un gain réel
+  if (a > 0 && d < 8 && Math.abs(Math.round(a * Math.pow(10, d)) / Math.pow(10, d) - a) > 1e-9 && a < 1) d = Math.min(8, d + 1);
+  const n = v.toLocaleString('en-US', { minimumFractionDigits: c[1], maximumFractionDigits: d });
+  return c[2] ? (v < 0 ? '-' : '') + c[0] + n.replace('-', '') : n + c[0];
 }
 const bet = () => BETS[state.betIdx];
 const wait = ms => new Promise(r => setTimeout(r, state.turbo ? ms * 0.45 : ms));
@@ -1059,7 +1106,7 @@ function drawLines(wins) {
 }
 
 /* ---- le mégaphone hurle quand il fait partie d'un gain ---- */
-const BUBBLES = ['Hear us!', 'On strike!', 'Prices down!', "We won't pay!", 'All together!', 'Wages up!'];
+const BUBBLES = ['Hear us!', 'On strike!', 'Prices down!', "We won't back down!", 'All together!', 'Wages up!'];
 function megaphoneBlast(cells) {
   const m = $('machine');
   cells.slice(0, 3).forEach(([r, row], i) => setTimeout(() => {
@@ -1175,7 +1222,7 @@ function render() {
   $('bet').textContent = fmt(bet());
   $('buy').innerHTML = `<b>Bonus</b><small>${fmt(bet() * M.BONUS_BUY_COST)}</small>`;
   $('promoPrice').innerHTML = `${SOCIAL ? 'Get it now for' : 'Buy it for'} <b>${fmt(bet() * M.BONUS_BUY_COST)}</b>`;
-  const lock = state.busy;
+  const lock = state.busy || state.fatal;
   $('spin').disabled = lock;
   $('buy').disabled = lock || state.balance < bet() * M.BONUS_BUY_COST;
   $('betDown').disabled = lock || state.betIdx === 0;
@@ -1183,15 +1230,8 @@ function render() {
 }
 function msg(html) { $('msg').innerHTML = html; }
 
-async function play(mode) {
-  if (state.busy) return;
-  const cost = mode === 'buy' ? bet() * M.BONUS_BUY_COST : bet();
-  if (state.balance < cost) { msg(L.insufficient); state.auto = 0; syncAuto(); return; }
-  state.busy = true; state.balance -= cost; $('win').textContent = fmt(0); render();
-  msg(mode === 'buy' ? `<b>${L.bought}</b>` : 'The reels are rolling…');
-
-  const round = M.playRound(mode);
-  const b = bet();
+// Anime une partie déjà décidée (par la démo locale, le serveur Stake ou un replay).
+async function presentRound(round, mode, b) {
   await spinTo(round.base.grid, M.STRIPS_BASE);
   const baseAmt = round.base.win * b;
   if (round.base.win > 0) {
@@ -1268,17 +1308,151 @@ async function play(mode) {
     document.body.classList.remove('strike'); smokeBoost = 0;
   }
 
-  const total = round.totalWin * b;
-  state.balance += total;
+}
+
+// L'événement « round » des books contient la partie complète.
+function roundFromEvents(r) {
+  const list = (r && (r.state || r.events)) || [];
+  const ev = list.find(e => e && e.type === 'round');
+  if (!ev) throw Object.assign(new Error('bad book'), { code: 'BAD_BOOK' });
+  return ev.round;
+}
+function stop() { state.auto = 0; syncAuto(); }
+function fatal(title, text) {
+  state.fatal = true; state.busy = true; stop();
+  $('errTitle').textContent = title; $('errText').textContent = text;
+  $('errScreen').classList.add('show'); render();
+}
+function rgsError(e) {
+  if (e.code === 'ERR_IPB') { msg(L.insufficient); stop(); return; }
+  if (e.code === 'ERR_GLE') { msg(L.limits); stop(); return; }
+  if (e.code === 'ERR_ACT') { msg('The server is busy. Please try again in a moment.'); stop(); return; }
+  if (e.code === 'ERR_VAL') return fatal('Session expired', 'Your game session is no longer valid. Please reload the game.');
+  fatal('Connection problem', 'The game server could not be reached. Please check your connection and reload the game to finish any uncompleted round.');
+}
+// Fin de partie : seulement pour une partie qui paie (une partie à 0× est déjà close par le serveur) [221]
+async function finishRound() {
+  try { const r = await api.endRound(); state.balance = r.balance.amount / MICRO; }
+  catch (e) { rgsError(e); }
+}
+function setBetTo(value) {
+  let i = BETS.findIndex(v => Math.abs(v - value) < 1e-9);
+  if (i < 0) { BETS.push(value); BETS.sort((x, y) => x - y); i = BETS.indexOf(value); }
+  state.betIdx = i;
+}
+
+async function play(mode) {
+  if (state.busy || state.fatal || REPLAY) return;
+  const b = bet();
+  const cost = mode === 'buy' ? b * M.BONUS_BUY_COST : b;
+  if (state.balance < cost) { msg(L.insufficient); stop(); return; } // [222] aucune requête sans solde suffisant
+  state.busy = true; $('win').textContent = fmt(0);
+  let round, rgsRound = null;
+  if (RGS_MODE) {
+    render(); msg('…');
+    try {
+      const r = await api.play(Math.round(b * MICRO), mode === 'buy' ? 'bonus' : 'base');
+      rgsRound = r.round; state.balance = r.balance.amount / MICRO; round = roundFromEvents(rgsRound);
+    } catch (e) { state.busy = false; rgsError(e); render(); return; }
+  } else {
+    state.balance -= cost; round = M.playRound(mode);
+  }
+  render();
+  msg(mode === 'buy' ? `<b>${L.bought}</b>` : 'The reels are rolling…');
+  await presentRound(round, mode, b);
+  const total = (rgsRound ? rgsRound.payoutMultiplier / 100 : round.totalWin) * b;
+  if (rgsRound) { if (rgsRound.payoutMultiplier > 0) await finishRound(); } else state.balance += total;
+  if (state.fatal) return;
   $('win').textContent = fmt(total);
-  await bigWin(round.totalWin * b / cost * (mode === 'buy' ? M.BONUS_BUY_COST : 1), total);
+  await bigWin(total / b, total);
   if (total > 0) msg(`Total win: <b>${fmt(total)}</b>`);
   state.busy = false; render();
-
   if (state.auto > 0) {
     state.auto--; syncAuto();
     if (state.auto > 0) { await wait(400); play('base'); }
   }
+}
+
+/* ---------------- Démarrage : démo, serveur Stake ou replay ---------------- */
+function applyAuth(a) {
+  state.balance = a.balance.amount / MICRO;
+  if (a.balance.currency) CURRENCY = String(a.balance.currency).toUpperCase();
+  const cfg = a.config || {};
+  if (cfg.jurisdiction && cfg.jurisdiction.socialCasino) setSocial(true);
+  let levels = (cfg.betLevels || []).map(v => v / MICRO).filter(v => v > 0);
+  if (!levels.length && cfg.minBet && cfg.maxBet && cfg.stepBet) {
+    for (let v = cfg.minBet; v <= cfg.maxBet; v += cfg.stepBet) levels.push(v / MICRO);
+  }
+  if (cfg.minBet) levels = levels.filter(v => v >= cfg.minBet / MICRO - 1e-9);
+  if (cfg.maxBet) levels = levels.filter(v => v <= cfg.maxBet / MICRO + 1e-9);
+  if (levels.length) BETS = levels;
+  const def = cfg.defaultBetLevel ? cfg.defaultBetLevel / MICRO : BETS[0];
+  let best = 0; BETS.forEach((v, i) => { if (Math.abs(v - def) < Math.abs(BETS[best] - def)) best = i; });
+  state.betIdx = best;
+}
+// Une partie interrompue est reprise avec SA mise (pas la mise par défaut) [187]
+async function resumeRound(r) {
+  setBetTo(r.amount / MICRO); render();
+  const mode = r.mode === 'bonus' ? 'buy' : 'base', b = bet();
+  msg('Resuming your unfinished round…');
+  state.busy = true;
+  const round = roundFromEvents(r);
+  await presentRound(round, mode, b);
+  const total = r.payoutMultiplier / 100 * b;
+  if (r.payoutMultiplier > 0) await finishRound();
+  if (state.fatal) return;
+  $('win').textContent = fmt(total);
+  await bigWin(total / b, total);
+  msg(`Round finished. Total win: <b>${fmt(total)}</b>`);
+  state.busy = false; render();
+}
+let replayData = null;
+async function initReplay() {
+  document.body.classList.add('replay');
+  const amount = (+params.get('amount') > 0 ? +params.get('amount') : MICRO) / MICRO;
+  BETS = [amount]; state.betIdx = 0; state.balance = 0;
+  state.busy = true; render(); msg('Loading replay…');
+  try {
+    const data = await RGS.replay(params.get('rgs_url'), params.get('game'), params.get('version'), params.get('mode') || 'base', params.get('event'));
+    replayData = { round: roundFromEvents(data), payout: (data.payoutMultiplier || 0) / 100, costMul: data.costMultiplier || 1, mode: params.get('mode') || 'base', amount };
+  } catch (e) { fatal('Replay unavailable', 'This round could not be loaded. Please check the link and try again.'); return; }
+  state.busy = false; replayReady(false);
+}
+function replayInfo() {
+  const d = replayData, cost = d.amount * d.costMul;
+  return `<b>REPLAY</b> · ${L.Bet}: ${fmt(d.amount)}` + (d.costMul > 1 ? ` · ${d.mode === 'bonus' ? 'General Strike' : d.mode} ×${d.costMul} · Real cost: ${fmt(cost)}` : '');
+}
+function replayReady(again) {
+  $('spin').innerHTML = (again ? 'Replay' : 'Play') + '<small>space</small>';
+  msg(replayInfo()); render();
+}
+async function runReplay() {
+  if (!replayData || state.busy || state.fatal) return;
+  state.busy = true; render(); $('win').textContent = fmt(0);
+  const d = replayData, mode = d.mode === 'bonus' ? 'buy' : 'base';
+  await presentRound(d.round, mode, d.amount);
+  const total = d.payout * d.amount;
+  $('win').textContent = fmt(total);
+  await bigWin(d.payout, total);
+  state.busy = false; replayReady(true);
+  msg(replayInfo() + ` · Win: <b>${fmt(total)}</b>`);
+}
+async function init() {
+  $('betLbl').textContent = L.Bet;
+  $('win').textContent = fmt(0);
+  if (REPLAY) return initReplay();
+  if (!RGS_MODE) { msg('Welcome to the street. <b>20 lines</b>, demo balance, nothing else to lose.'); render(); return; }
+  state.busy = true; render(); msg('Connecting…');
+  try {
+    api = RGS.client(params.get('rgs_url'), params.get('sessionID'));
+    const a = await api.authenticate();
+    applyAuth(a); $('betLbl').textContent = L.Bet; render();
+    if (a.round && a.round.active) { await resumeRound(a.round); return; }
+  } catch (e) {
+    return fatal('Connection problem', 'The game server could not be reached. Please check your connection and reload the game.');
+  }
+  state.busy = false; render();
+  msg('Welcome to the street. <b>20 lines</b>. Press SPIN or the space bar to play.');
 }
 
 /* ---------------- Autoplay : toujours confirmé explicitement ---------------- */
@@ -1303,8 +1477,19 @@ $('autoStart').addEventListener('click', () => {
   state.auto = autoChoice; syncAuto(); if (!state.busy) play('base');
 });
 
-$('spin').addEventListener('click', () => play('base'));
-$('buy').addEventListener('click', () => play('buy'));
+$('spin').addEventListener('click', () => (REPLAY ? runReplay() : play('base')));
+$('buy').addEventListener('click', () => {
+  if (state.busy || state.fatal || REPLAY) return;
+  const c = bet() * M.BONUS_BUY_COST;
+  if (state.balance < c) { msg(L.insufficient); return; }
+  $('buyText').textContent = L.confirmQ + ' ' + M.BONUS_BUY_COST + '× the ' + L.totalBet + '?';
+  $('buyCost').textContent = fmt(c);
+  $('buyConfirm').textContent = L.confirmBtn;
+  $('buyScreen').classList.add('show'); $('buyConfirm').focus();
+});
+$('buyCancel').addEventListener('click', () => $('buyScreen').classList.remove('show'));
+$('buyConfirm').addEventListener('click', () => { $('buyScreen').classList.remove('show'); play('buy'); });
+$('errReload').addEventListener('click', () => location.reload());
 $('betUp').addEventListener('click', () => { state.betIdx = Math.min(BETS.length - 1, state.betIdx + 1); render(); });
 $('betDown').addEventListener('click', () => { state.betIdx = Math.max(0, state.betIdx - 1); render(); });
 $('turbo').addEventListener('click', e => { state.turbo = !state.turbo; e.currentTarget.setAttribute('aria-pressed', state.turbo); });
@@ -1318,8 +1503,8 @@ $('info').addEventListener('click', () => { buildRules(); $('rules').classList.a
 $('rulesClose').addEventListener('click', () => $('rules').classList.remove('show'));
 document.addEventListener('keydown', e => {
   // La barre d'espace lance un tour (exigence Stake), sauf si un écran est ouvert
-  if (e.code === 'Space' && !document.querySelector('.overlay.show')) { e.preventDefault(); play('base'); }
-  if (e.key === 'Escape') { $('rules').classList.remove('show'); $('autoScreen').classList.remove('show'); }
+  if (e.code === 'Space') { e.preventDefault(); if (!document.querySelector('.overlay.show')) (REPLAY ? runReplay() : play('base')); }
+  if (e.key === 'Escape') { $('rules').classList.remove('show'); $('autoScreen').classList.remove('show'); $('buyScreen').classList.remove('show'); }
 });
 
 /* ---------------- Règles et informations ---------------- */
@@ -1331,7 +1516,7 @@ function buildRules() {
   <h3>Game modes</h3>
   <table>
     <tr><th>Mode</th><th>${L.costLbl}</th><th>RTP</th><th>Max win</th></tr>
-    ${MODES.map(m => `<tr><td>${m.label}</td><td>${x(m.cost)} ${L.totalBet} (${fmt(m.cost * b)})</td><td>${m.rtp}</td><td>${x(M.MAX_WIN)} ${L.totalBet} (${fmt(M.MAX_WIN * b)})</td></tr>`).join('')}
+    ${modes().map(m => `<tr><td>${m.label}</td><td>${x(m.cost)} ${L.totalBet} (${fmt(m.cost * b)})</td><td>${m.rtp}</td><td>${x(m.maxWin)} ${L.totalBet} (${fmt(m.maxWin * b)})</td></tr>`).join('')}
   </table>
   <p>The RTP (return to player) is the theoretical average return, calculated over a very large number of rounds. The max win is ${x(M.MAX_WIN)} the ${L.totalBet} in every mode. When it is reached, the round ends immediately and the max win is awarded.</p>
 
@@ -1505,10 +1690,7 @@ function frame(t) {
 }
 requestAnimationFrame(frame);
 
-$('betLbl').textContent = L.Bet;
-$('win').textContent = fmt(0);
-msg(`Welcome to the street. <b>20 lines</b>, demo balance, nothing else to lose.`);
-render();
+init();
 })();
 </script>
 </body>

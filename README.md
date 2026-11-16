@@ -21,7 +21,11 @@ Puis ouvrir http://localhost:3068.
 | `sim.js` | Simulation du RTP : `node sim.js 2000000` |
 | `tail.js` | Fréquence des très gros gains : `node tail.js base 6000000` |
 | `assets/fonts/` | Polices du jeu (livrées avec le jeu, pas de Google Fonts) |
-| `serve.js` | Petit serveur local |
+| `serve.js` | Serveur local + imitation du serveur de jeu Stake (RGS) pour les tests |
+| `rgs.js` | Client du serveur de jeu Stake Engine (authenticate, play, end-round, replay) |
+| `math-summary.js` | RTP et gain max réels par mode (généré) |
+| `tools/export-math.js` | Génère les maths au format Stake : `node tools/export-math.js` |
+| `math/publish/` | Fichiers de maths à déposer sur Stake Engine |
 | `assets/symbols/` | Symboles détourés (PNG 512×512, fond transparent) |
 | `assets/bg.jpg` | Décor de fond (version allégée) |
 | `assets/source/` | Visuels d'origine (planches et fond en pleine taille) |
@@ -34,20 +38,26 @@ Puis ouvrir http://localhost:3068.
 - Wild : le mégaphone (rouleaux 2 à 4), slogan + rouleaux qui tremblent. Scatter : la barricade (3/4/5 → 10/12/15 tours gratuits).
 - General Strike : les mégaphones recouvrent leur rouleau, l'euro doré ajoute +1 à +5 au multiplicateur, qui gagne aussi +1 par tour gagnant.
 - Achat du bonus : 67× la mise. Gain max : 2 000× la mise (atteint ~1 fois sur 2 M en jeu normal).
-- RTP simulé : ~96,2 % en jeu normal, ~96,0 % en achat du bonus (écart < 0,5 point, non certifié).
+- RTP des fichiers publiés : 95,46 % en jeu normal, 95,49 % en achat du bonus (écart 0,03 point), gain max 2 000× dans les deux modes.
 
-## Conformité Stake Engine (prototype)
+## Conformité Stake Engine
 
-- Interface en anglais ; `?social=true` passe au vocabulaire Stake.us (play, get bonus, win table…) et en jetons GC.
-- `?currency=EUR` (ou autre code) change la devise affichée.
-- Format 16:9 mis à l'échelle sans défilement (mini-lecteur 400×225 compris), version portrait sur mobile.
-- Règles : modes, coût, RTP et gain max par mode, table des gains, symboles spéciaux, guide des boutons, avertissement.
-- Autoplay avec confirmation, barre d'espace = lancer, bouton son.
-- Polices et images livrées avec le jeu, aucune ressource externe.
+Paramètres d'URL gérés : `sessionID`, `rgs_url`, `lang`, `currency`, `device`, `social`, et pour le replay `replay=true&game&version&mode&event&amount`.
 
-## À faire
+- Au chargement : `/wallet/authenticate` ; mises, mise par défaut, devise et mode social viennent de la réponse.
+- Une partie : `/wallet/play` (montants en micro-unités), puis `/wallet/end-round` seulement si la partie gagne.
+- Partie restée ouverte : reprise automatique avec sa mise d'origine.
+- Solde insuffisant : aucune requête envoyée, message affiché. Serveur injoignable : écran d'erreur, jeu bloqué.
+- Achat du bonus : écran de confirmation avec le coût réel.
+- Devises : USD, EUR, CAD, MXN, JPY (sans décimales), BTC (6 décimales), USDT, jetons SC/GC sans « $ ».
+- Mode social (Stake.us) : vocabulaire sans mots interdits (bet, buy, pay, cash…), vérifié automatiquement.
+- Replay : aucun appel au portefeuille, affiche la mise, le coût réel, bouton Play puis Replay.
+- Testé aux formats 1024×576, 800×450, 400×225 et 425×812.
 
-- Tous les symboles ont leur visuel (la pièce d'or du cochon remplace l'euro doré).
-- Le fond montre encore « POLICE » sur l'hélicoptère (petit) : à retirer dans la version finale.
-- Niveaux de mise, devise, mode replay et appels au serveur (RGS) : à brancher lors du portage.
-- Porter les maths et l'interface vers les outils de Stake Engine.
+Tester comme un relecteur : `node serve.js` puis par exemple
+http://localhost:3068/?sessionID=short-1&rgs_url=localhost:3068 (sessions `zero-`, `short-`, `jpy-`, `btc-`, `usdt-`, `xsc-`, `social-`, `active-`, `bad` : voir `serve.js`).
+
+## Reste à faire (humain)
+
+- Vérifier le contenu des images : panneau de l'image « riot », corps au sol dans « revolution », ressemblance du chat rose avec un personnage connu.
+- Déposer `math/publish/` et les fichiers du jeu sur Stake Engine, puis lancer la relecture.
