@@ -460,8 +460,15 @@ body.strike #stage.portrait #side .promo { display: none; }
   clip-path: none; background: #000; overflow: hidden; display: grid; place-items: center; text-align: center;
   animation: none;
 }
+/* l'illustration entière, sur toute la hauteur ; les côtés sont remplis par la même image, floutée et assombrie */
+#bwArtBg { display: none; }
+#bwPoster.art #bwArtBg {
+  display: block; position: absolute; inset: -40px; width: calc(100% + 80px); height: calc(100% + 80px);
+  object-fit: cover; filter: blur(22px) brightness(.62) saturate(1.25);
+}
 #bwPoster.art #bwArt {
-  display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%;
+  display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%;
+  filter: drop-shadow(0 0 30px rgba(0,0,0,.7));
   animation: artSlam .8s cubic-bezier(.2,1.2,.4,1), artZoom 9s .8s ease-out forwards;
 }
 #bwPoster.art::after { /* assombrit le centre et les bords pour que le montant ressorte */
@@ -482,7 +489,7 @@ body.strike #stage.portrait #side .promo { display: none; }
 #bwPoster.art p { color: #fff; font-size: 20px; text-shadow: 0 2px 6px #000, 0 0 3px #000; }
 #bwPoster.art .cta { background: var(--yellow); color: var(--black); box-shadow: 0 6px 0 #000; }
 @keyframes artSlam { 0% { transform: scale(1.5); filter: brightness(3) blur(6px); opacity: 0; } 60% { filter: brightness(1.4) blur(0); opacity: 1; } 100% { transform: scale(1.04); } }
-@keyframes artZoom { to { transform: scale(1.14); } } /* lent zoom de caméra pendant que le montant monte */
+@keyframes artZoom { to { transform: scale(1.03); } } /* très léger zoom de caméra pendant que le montant monte */
 @keyframes titleIn { from { transform: scale(0) rotate(-20deg); } }
 @keyframes amountPulse { to { transform: scale(1.06); text-shadow: 0 0 50px rgba(255,212,0,1), 6px 6px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; } }
 #stage.portrait #bwPoster.art .big { font-size: 130px; }
@@ -642,6 +649,7 @@ body.strike #stage.portrait #side .promo { display: none; }
 
   <!-- Gros gain -->
   <div class="overlay" id="bigwin"><div class="poster red" id="bwPoster">
+    <img id="bwArtBg" alt="" draggable="false">
     <img id="bwArt" alt="" draggable="false">
     <div class="bw-text">
       <h2 id="bwTitle"></h2>
@@ -1153,7 +1161,7 @@ async function bigWin(x, amount) {
   }
   await overlay('bigwin', () => {
     $('bwPoster').classList.toggle('art', !!tier.art); $('bigwin').classList.toggle('art', !!tier.art);
-    if (tier.art) { const a = $('bwArt'); a.style.animation = 'none'; a.src = tier.art; void a.offsetWidth; a.style.animation = ''; }
+    if (tier.art) { const a = $('bwArt'); a.style.animation = 'none'; a.src = tier.art; $('bwArtBg').src = tier.art; void a.offsetWidth; a.style.animation = ''; }
     $('bwTitle').textContent = tier.title; $('bwSub').textContent = tier.sub;
     $('bwAmount').textContent = fmt(0); countUp($('bwAmount'), amount, tier.art ? 2200 : 1400);
   });
