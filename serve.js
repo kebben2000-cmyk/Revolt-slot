@@ -7,6 +7,9 @@
 //      zero-…   solde à 0                    short-…  mises limitées à 1,00–2,00 (défaut au milieu)
 //      jpy-… / eur-… / btc-… / usdt-… / xsc-…   devise                 social-… mode Stake.us
 //      active-… une partie gagnante est restée ouverte (à reprendre)       bad      session refusée
+//      jur-…    réglages de juridiction stricts (turbo, autoplay, bonus coupés ; RTP, chrono, bilan affichés ; 3 s mini)
+//      maint-…  /wallet/play répond 423 (maintenance)
+//    Comme le vrai RGS : payoutMultiplier est un multiplicateur décimal (2 = 2×), payout en micro-unités.
 //    Journal des requêtes reçues : GET /_log
 const http = require('http'), fs = require('fs'), path = require('path'), zlib = require('zlib');
 const root = __dirname, port = 3068;
@@ -44,18 +47,26 @@ function session(id) {
     const s = { balance: id.startsWith('zero-') ? 0 : 1000 * MICRO, currency: cur, round: null, social: id.startsWith('social-') || id.startsWith('xsc-') };
     if (id.startsWith('active-')) { // une partie gagnante restée ouverte, misée à 2,00
       let b; do { b = pick('base'); } while (b.payoutMultiplier === 0);
-      s.round = { id: b.id, amount: 2 * MICRO, mode: 'base', payoutMultiplier: b.payoutMultiplier, costMultiplier: 1, active: true, state: b.events };
+      s.round = toRound(b, 2 * MICRO, 'base', 1);
       s.balance -= 2 * MICRO;
     }
     sessions.set(id, s);
   }
   return sessions.get(id);
 }
+// Forme d'une partie renvoyée par le vrai RGS : payoutMultiplier DÉCIMAL (2 = 2×), payout en micro-unités
+function toRound(b, amount, mode, cost) {
+  const pm = b.payoutMultiplier / 100; // les books stockent ×100
+  return { betID: b.id, amount, payout: Math.round(amount * pm), payoutMultiplier: pm, costMultiplier: cost, active: pm > 0, mode, state: b.events };
+}
 function config(id) {
   const levels = id.startsWith('short-') ? [1, 1.25, 1.5, 2] : [0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
   return { minBet: levels[0] * MICRO, maxBet: levels[levels.length - 1] * MICRO, stepBet: 0.1 * MICRO,
     defaultBetLevel: (id.startsWith('short-') ? 1.25 : 1) * MICRO, betLevels: levels.map(v => Math.round(v * MICRO)),
-    jurisdiction: { socialCasino: session(id).social } };
+    jurisdiction: { socialCasino: session(id).social, disabledFullscreen: false, disabledTurbo: id.startsWith('jur-'), disabledSuperTurbo: false,
+      disabledAutoplay: id.startsWith('jur-'), disabledSlamstop: false, disabledSpacebar: false, disabledBuyFeature: id.startsWith('jur-'),
+      displayNetPosition: id.startsWith('jur-'), displayRTP: id.startsWith('jur-'), displaySessionTimer: id.startsWith('jur-'),
+      minimumRoundDuration: id.startsWith('jur-') ? 3000 : 0 } };
 }
 
 function send(res, code, obj) {
@@ -76,18 +87,19 @@ function wallet(route, body, res) {
   }
   if (route === '/wallet/balance') return send(res, 200, { balance: balance() });
   if (route === '/wallet/play') {
+    if (id.startsWith('maint-')) { res.writeHead(423, { 'Access-Control-Allow-Origin': '*' }); return res.end(); } // jeux en pause (maintenance)
     const mode = modes[body.mode]; if (!mode) return err(res, 400, 'ERR_VAL', 'unknown mode');
     if (s.round && s.round.active) return err(res, 400, 'ERR_VAL', 'round still active');
     const cost = body.amount * mode.cost;
     if (!(body.amount > 0) || cost > s.balance) return err(res, 400, 'ERR_IPB', 'insufficient balance');
     const b = pick(body.mode);
     s.balance -= cost;
-    s.round = { id: b.id, amount: body.amount, mode: body.mode, payoutMultiplier: b.payoutMultiplier, costMultiplier: mode.cost, active: b.payoutMultiplier > 0, state: b.events };
+    s.round = toRound(b, body.amount, body.mode, mode.cost);
     return send(res, 200, { balance: balance(), round: s.round });
   }
   if (route === '/wallet/end-round') {
     if (!s.round || !s.round.active) return err(res, 400, 'ERR_VAL', 'no active round');
-    s.balance += Math.round(s.round.amount * s.round.payoutMultiplier / 100); s.round.active = false;
+    s.balance += s.round.payout; s.round.active = false;
     return send(res, 200, { balance: balance() });
   }
   return err(res, 404, 'ERR_VAL', 'unknown endpoint');
@@ -111,7 +123,7 @@ http.createServer((req, res) => {
     const M = modes[mode], line = M && M.byId.get(+event);
     if (!line) return err(res, 404, 'ERR_VAL', 'replay not found');
     const b = JSON.parse(line);
-    return send(res, 200, { payoutMultiplier: b.payoutMultiplier, costMultiplier: M.cost, state: b.events });
+    return send(res, 200, { payoutMultiplier: b.payoutMultiplier / 100, costMultiplier: M.cost, state: b.events });
   }
   if (p === '/') p = '/index.html';
   const file = path.join(root, path.normalize(p));

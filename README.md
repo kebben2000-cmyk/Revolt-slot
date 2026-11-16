@@ -25,6 +25,7 @@ Puis ouvrir http://localhost:3068.
 | `rgs.js` | Client du serveur de jeu Stake Engine (authenticate, play, end-round, replay) |
 | `math-summary.js` | RTP et gain max réels par mode (généré) |
 | `tools/export-math.js` | Génère les maths au format Stake : `node tools/export-math.js` |
+| `tools/audit.js` | Audit indépendant des maths (recalcule les gains depuis les règles) → `docs/audit-maths.md`, `docs/replays.md` |
 | `tools/make-upload.js` | Prépare `stake-upload/` (front, math, tile) à déposer sur Stake Engine |
 | `math/publish/` | Fichiers de maths à déposer sur Stake Engine (≈70 Mo, non versionnés : `node tools/export-math.js`, ~6 min) |
 | `assets/symbols/` | Symboles détourés (PNG 512×512, fond transparent) |
@@ -63,3 +64,13 @@ http://localhost:3068/?sessionID=short-1&rgs_url=localhost:3068 (sessions `zero-
 
 - Vérifier le contenu des images : panneau de l'image « riot », corps au sol dans « revolution », ressemblance du chat rose avec un personnage connu.
 - Déposer `math/publish/` et les fichiers du jeu sur Stake Engine, puis lancer la relecture.
+
+## Avant chaque envoi à Stake
+
+1. `node tools/export-math.js` (si les maths ont changé, ~6 min) puis `node tools/audit.js` : tout doit être ✓.
+2. Incrémenter `VERSION` dans index.html (affichée en bas des règles).
+3. `node tools/make-upload.js` : recrée `stake-upload/` (front, math, tile, ENVOI.md).
+
+À savoir : le vrai RGS renvoie `payoutMultiplier` en multiplicateur décimal (2 = 2×) et `payout` en micro-unités,
+alors que les fichiers de maths le stockent ×100. Le jeu utilise `payout` (voir `roundPayout`).
+Réglages de juridiction appliqués : turbo, autoplay et bonus désactivables, barre d'espace, RTP / durée de session / bilan affichés, durée minimale d'un tour.

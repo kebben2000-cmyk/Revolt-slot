@@ -549,6 +549,10 @@
     schedTimer = setTimeout(tick, 1000);
   }
 
+  // Safari / iPhone : le son peut être suspendu (appel, veille, onglet). Chaque geste du joueur le relance.
+  function wake() { if (enabled && ctx && ctx.state !== 'running') ctx.resume(); }
+  if (typeof addEventListener === 'function') ['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, wake, { passive: true }));
+
   /* ---------- API ---------- */
   function enable(on) {
     enabled = !!on;

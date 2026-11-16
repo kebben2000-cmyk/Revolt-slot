@@ -350,6 +350,27 @@ body.strike #stage.portrait #side .promo { display: none; }
 #stage.portrait #msg { left: 50%; top: 612px; width: 684px; white-space: normal; }
 #msg b { color: var(--yellow); font-weight: normal; }
 
+#bar [hidden], #buy[hidden], #promoPrice[hidden] { display: none !important; }
+/* Mobile : boutons assez grands pour un doigt (≥ 44 px réels une fois la scène réduite à la taille du téléphone) */
+body #stage.portrait #bar { grid-template-columns: 84px 84px 84px 1fr 1fr; grid-template-rows: 88px 124px; gap: 14px; }
+body #stage.portrait .icon-btn, #stage.portrait #sound { width: 84px; height: 84px; border-width: 4px; }
+body #stage.portrait .icon-btn svg, #stage.portrait #sound svg { width: 42px; height: 42px; }
+body #stage.portrait #info { width: 84px; height: 84px; gap: 10px; }
+body #stage.portrait #info span { width: 48px; height: 7px; }
+body #stage.portrait .bet-arrows { grid-auto-flow: column; gap: 10px; }
+body #stage.portrait .bet-arrows button { width: 84px; height: 84px; background: rgba(236,228,211,.08); border: 3px solid rgba(236,228,211,.35); }
+body #stage.portrait .bet-arrows svg { width: 40px; height: 30px; }
+body #stage.portrait #spin { width: 124px; height: 124px; }
+body #stage.portrait #shopClose { width: 84px; height: 84px; font-size: 40px; }
+body #stage.portrait .shop-bet button { width: 84px; height: 84px; }
+body #stage.portrait .choices button { width: 96px; height: 84px; }
+body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
+/* bandeau des informations imposées par certaines juridictions (RTP, durée de session, bilan) */
+#jurInfo { position: absolute; left: 12px; top: 8px; z-index: 12; display: flex; gap: 14px; padding: 4px 12px; font-family: var(--display);
+  font-size: 16px; letter-spacing: .03em; text-transform: uppercase; color: var(--paper); background: rgba(10,10,10,.72); border-left: 4px solid var(--yellow); }
+#jurInfo[hidden] { display: none; }
+#jurInfo b { color: var(--yellow); font-weight: normal; }
+#stage.portrait #jurInfo { top: 6px; font-size: 20px; }
 /* ---------- Barre de commandes : bandeau en bas d'écran ----------
    [son] [turbo] [menu]  SOLDE  GAIN  ……  [MISE ▲▼] [auto] (LANCER) */
 #bar {
@@ -551,6 +572,154 @@ body.strike #stage.portrait #side .promo { display: none; }
 #stage.portrait .bw-copy { left: 0; right: 0; top: 640px; bottom: auto; width: auto; height: 600px; align-items: center; justify-content: flex-start; padding-top: 26px; }
 #stage.portrait #bwTitle { transform-origin: 50% 50%; }
 @media (prefers-reduced-motion: reduce) { .bw-rays, .bw-poster, .bw-fall i, .bw-sirens::before, .bw-sirens::after { animation: none !important; } }
+/* écrans plein écran : on touche n'importe où pour continuer */
+.overlay.tap { cursor: pointer; background: radial-gradient(ellipse at 50% 45%, rgba(143,4,0,.55), rgba(10,10,10,.88) 70%); }
+.press {
+  margin-top: 8px; border: 0; background: none; padding: 4px 20px; font-family: var(--display); text-transform: uppercase;
+  font-size: 50px; letter-spacing: .02em; color: var(--yellow);
+  text-shadow: 0 0 16px rgba(255,140,0,.95), 0 0 34px rgba(225,6,0,.7), 3px 3px 0 #000;
+  animation: pressGlow .9s ease-in-out infinite alternate;
+}
+.poster .cta.press, .poster.red .cta.press { background: none; color: var(--yellow); box-shadow: none; padding: 4px 20px; font-size: 46px; }
+@keyframes pressGlow { from { opacity: .65; transform: scale(.97); } to { opacity: 1; transform: scale(1.03); } }
+.splash { position: relative; display: grid; justify-items: center; text-align: center; width: 100%; max-width: 820px; animation: pop .55s cubic-bezier(.3,1.5,.5,1); }
+.sp-num {
+  font-family: var(--display); font-size: 190px; line-height: .8; color: var(--yellow); padding-top: 14px; text-transform: uppercase;
+  -webkit-text-stroke: 9px var(--black); paint-order: stroke fill;
+  text-shadow: 12px 12px 0 var(--red), 0 0 70px rgba(255,212,0,.45);
+  transform: rotate(-3deg); animation: numSlam .7s .1s cubic-bezier(.2,1.4,.4,1) backwards;
+}
+@keyframes numSlam { 0% { transform: scale(3) rotate(-10deg); opacity: 0; } 100% { transform: rotate(-3deg); opacity: 1; } }
+.sp-banner {
+  position: relative; z-index: 2; margin-top: -6px; font-family: var(--display); text-transform: uppercase; font-size: 76px; line-height: 1;
+  background: var(--red); color: var(--paper); padding: 4px 40px 12px; transform: rotate(-2deg);
+  clip-path: polygon(1% 6%, 12% 0, 40% 5%, 63% 0, 99% 4%, 100% 50%, 98% 96%, 70% 100%, 33% 95%, 4% 100%, 0 55%);
+  text-shadow: 4px 4px 0 var(--black); filter: drop-shadow(0 8px 0 rgba(0,0,0,.45));
+}
+.sp-kicker { font-family: var(--display); text-transform: uppercase; font-size: 30px; background: var(--black); color: var(--yellow); padding: 2px 22px 6px; border: 3px solid var(--yellow); transform: rotate(-1deg); }
+.sp-board {
+  position: relative; z-index: 1; margin-top: 14px; padding: 14px 40px 58px; display: grid; gap: 2px;
+  background: linear-gradient(180deg, #efe6d2, #d8cbb0); color: var(--black);
+  font-family: var(--display); text-transform: uppercase; font-size: 27px; line-height: 1.15;
+  clip-path: polygon(0 4%, 10% 0, 46% 3%, 78% 0, 100% 4%, 99% 50%, 100% 96%, 64% 100%, 30% 97%, 3% 100%, 1% 52%);
+  transform: rotate(1deg); box-shadow: 0 14px 30px rgba(0,0,0,.5);
+}
+.sp-board b { color: var(--red); font-weight: normal; }
+.sp-props { position: relative; z-index: 3; height: 112px; width: 400px; margin-top: -44px; pointer-events: none; }
+.sp-props img { position: absolute; top: 0; width: 120px; height: 120px; object-fit: contain; filter: drop-shadow(0 8px 6px rgba(0,0,0,.7)); }
+.sp-props img:first-child { left: 0; transform: rotate(-16deg); }
+.sp-props img:last-child { right: 0; transform: rotate(16deg) scaleX(-1); }
+.sp-plate {
+  margin-top: 18px; font-family: var(--display); font-size: 100px; line-height: 1; color: var(--yellow); font-variant-numeric: tabular-nums;
+  padding: 8px 54px 14px; min-width: 440px; background: rgba(18,18,18,.95);
+  border: 6px solid var(--red); box-shadow: 0 0 0 6px var(--yellow), 0 14px 0 6px rgba(0,0,0,.55), 0 0 60px rgba(255,212,0,.35);
+  text-shadow: 0 0 24px rgba(255,180,0,.75), 4px 4px 0 #000;
+}
+.won-sub { margin: 18px 0 0; font-family: var(--display); text-transform: uppercase; font-size: 26px; color: var(--paper); text-shadow: 0 2px 4px #000; }
+#wonScreen .sp-num { font-size: 170px; margin-top: 10px; }
+#stage.portrait .sp-num { font-size: 190px; }
+#stage.portrait .sp-banner { font-size: 64px; }
+#stage.portrait .sp-board { font-size: 24px; padding: 14px 26px 46px; }
+#stage.portrait .sp-plate { font-size: 72px; min-width: 0; padding: 8px 30px 12px; }
+#stage.portrait #wonScreen .sp-num { font-size: 140px; }
+/* écran d'accueil : trois panneaux de manif qui présentent le jeu */
+.intro { display: grid; justify-items: center; width: 100%; animation: pop .5s cubic-bezier(.3,1.5,.5,1); }
+.intro .logo { font-size: 96px; }
+.cards { display: flex; gap: 40px; align-items: flex-start; justify-content: center; margin-top: 18px; }
+.card {
+  position: relative; width: 310px; padding: 30px 18px 22px; display: grid; justify-items: center; text-align: center;
+  /* légère transparence : on devine le décor derrière les panneaux */
+  background: linear-gradient(180deg, rgba(43,42,40,.4), rgba(23,22,21,.55)); border: 4px solid var(--black);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  box-shadow: 0 0 0 4px var(--concrete), 0 18px 40px rgba(0,0,0,.6); transform: rotate(-1.5deg);
+}
+.card::before { /* ruban de chantier en haut du panneau */
+  content: ''; position: absolute; left: -4px; right: -4px; top: -4px; height: 16px;
+  background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, var(--black) 14px 28px);
+}
+.card.mid { margin-top: 56px; transform: rotate(1.5deg); }
+.card-art { position: relative; height: 170px; width: 100%; display: grid; place-items: center; }
+.card-art img { width: 150px; height: 150px; object-fit: contain; filter: drop-shadow(0 8px 8px rgba(0,0,0,.7)); }
+.card-art.trio img { position: absolute; width: 124px; height: 124px; }
+.card-art.trio img:nth-child(1) { left: 0; transform: rotate(-12deg); }
+.card-art.trio img:nth-child(2) { z-index: 1; width: 140px; height: 140px; }
+.card-art.trio img:nth-child(3) { right: 0; transform: rotate(12deg); }
+.card-art .mult { position: absolute; right: 8px; bottom: 6px; font-family: var(--display); font-size: 54px; line-height: 1; color: var(--yellow); -webkit-text-stroke: 5px var(--black); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--red); transform: rotate(-8deg); }
+.card-art.max img { width: 100%; height: 170px; object-fit: cover; border: 3px solid var(--black); box-shadow: 0 0 0 3px var(--yellow); }
+.card-art.max .mult { left: 0; right: 0; bottom: auto; top: 50%; transform: translateY(-50%) rotate(-6deg); font-size: 52px; }
+.card h4 {
+  margin: 14px 0 6px; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 42px; line-height: .95;
+  color: var(--yellow); text-shadow: 3px 3px 0 var(--red), 5px 5px 0 var(--black);
+}
+.card p { text-shadow: 0 2px 3px #000; margin: 0; font-family: var(--display); text-transform: uppercase; font-size: 20px; line-height: 1.2; color: var(--paper); }
+#introScreen .press { margin-top: 20px; }
+#stage.portrait .cards { flex-direction: column; gap: 26px; margin-top: 26px; }
+#stage.portrait .card { width: 600px; grid-template-columns: 220px 1fr; text-align: left; justify-items: start; align-items: center; column-gap: 18px; padding: 26px 22px 18px; }
+#stage.portrait .card.mid { margin-top: 0; }
+#stage.portrait .card-art { grid-row: 1 / 3; height: 160px; }
+#stage.portrait .card h4 { margin-top: 0; }
+#stage.portrait .intro .logo { font-size: 110px; }
+/* ---------- Boutique de bonus ---------- */
+#shopScreen { padding: 18px 24px; background: rgba(10,10,10,.86); }
+.shop { width: 100%; display: grid; justify-items: center; gap: 18px; animation: pop .45s cubic-bezier(.3,1.5,.5,1); }
+.shop-head { display: flex; align-items: center; gap: 18px; }
+.shop-head h2 { margin: 0; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 54px; line-height: 1;
+  background: var(--red); color: var(--paper); padding: 2px 26px 8px; transform: rotate(-2deg); text-shadow: 3px 3px 0 var(--black);
+  clip-path: polygon(1% 6%, 12% 0, 40% 5%, 63% 0, 99% 4%, 100% 50%, 98% 96%, 70% 100%, 33% 95%, 4% 100%, 0 55%); }
+#shopClose { position: absolute; right: 26px; top: 20px; width: 54px; height: 54px; border-radius: 50%; border: 3px solid var(--paper);
+  background: var(--black); color: var(--paper); font-family: var(--display); font-size: 30px; line-height: 1; padding: 0; }
+.offers { display: grid; grid-template-columns: repeat(4, 268px); gap: 18px; }
+.offer { position: relative; display: grid; grid-template-rows: auto auto 1fr auto auto; background: #ece4d3; color: var(--black);
+  border: 4px solid var(--black); box-shadow: 0 0 0 3px var(--concrete), 0 14px 30px rgba(0,0,0,.6); text-align: center; }
+.offer.on { box-shadow: 0 0 0 4px var(--yellow), 0 0 30px rgba(255,212,0,.7); }
+.offer-art { position: relative; height: 150px; overflow: hidden; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 60%, rgba(225,6,0,.55), transparent 70%), #1d1c1a; border-bottom: 4px solid var(--black); }
+.offer-art::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 12px, var(--black) 12px 24px); }
+.offer-art img { width: 108px; height: 108px; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(0,0,0,.7)); }
+.offer-art img.l { position: absolute; left: 22px; top: 30px; transform: rotate(-14deg); width: 92px; height: 92px; }
+.offer-art img.r { position: absolute; right: 22px; top: 30px; transform: rotate(14deg); width: 92px; height: 92px; }
+.offer-art .big-tag { position: absolute; right: 10px; bottom: 4px; font-family: var(--display); font-size: 58px; line-height: 1; color: var(--yellow);
+  -webkit-text-stroke: 6px var(--black); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--red); transform: rotate(-8deg); }
+.offer h4 { margin: 0; padding: 6px 8px 8px; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 28px; line-height: 1;
+  background: var(--black); color: var(--yellow); }
+.offer p { margin: 0; padding: 12px 14px 4px; font-size: 15px; line-height: 1.3; align-self: center; }
+.offer-stats { font-family: var(--display); font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #6b6458; padding: 6px 0 0; }
+.offer .price { font-family: var(--display); font-size: 40px; line-height: 1; padding: 6px 0 10px; color: var(--black); text-shadow: 2px 2px 0 rgba(0,0,0,.15); }
+.offer .price small { display: block; font-family: var(--type); font-size: 12px; color: #555; margin-top: 3px; }
+.offer button { margin: 0 14px 14px; padding: 10px 0 12px; border: 3px solid var(--black); font-family: var(--display); font-size: 24px; text-transform: uppercase;
+  background: var(--red); color: var(--paper); box-shadow: 0 5px 0 var(--black); }
+.offer button.act { background: var(--yellow); color: var(--black); }
+.offer.on button.act { background: var(--black); color: var(--yellow); }
+.offer button:disabled { filter: grayscale(.8); opacity: .55; cursor: default; }
+.offer .on-badge { display: none; position: absolute; left: 50%; top: 18px; transform: translateX(-50%) rotate(-4deg); z-index: 2;
+  font-family: var(--display); text-transform: uppercase; font-size: 18px; background: var(--yellow); color: var(--black); padding: 1px 12px 3px; border: 2px solid var(--black); }
+.offer.on .on-badge { display: block; }
+.shop-bet { display: flex; align-items: center; gap: 22px; background: rgba(18,18,18,.96); border: 3px solid var(--paper); padding: 6px 14px; }
+.shop-bet button { width: 52px; height: 46px; border: 3px solid var(--paper); background: var(--black); color: var(--paper); font-family: Arial, sans-serif; font-weight: 900; font-size: 32px; line-height: 1; padding: 0; }
+.shop-bet button:disabled { opacity: .3; cursor: default; }
+.shop-bet span { font-family: var(--display); font-size: 34px; text-transform: uppercase; color: var(--paper); min-width: 230px; text-align: center; }
+.shop-bet b { color: var(--yellow); font-weight: normal; }
+#stage.portrait .offers { grid-template-columns: repeat(2, 320px); gap: 16px; }
+#stage.portrait .offer-art { height: 120px; }
+/* le bouton Bonus signale un mode « hunt » actif */
+#buy.hunting { background: radial-gradient(circle at 35% 30%, #ff6a5f, var(--red) 45%, var(--red-deep)); color: var(--paper); animation: huntPulse 1.2s ease-in-out infinite alternate; }
+@keyframes huntPulse { to { box-shadow: 0 0 0 5px var(--yellow), 0 10px 0 5px var(--black), 0 0 46px rgba(255,212,0,.9); } }
+/* accueil : le décor du jeu en fond, au bon format (cover) */
+#introScreen { background: url(assets/bg.jpg) center 35% / cover no-repeat; }
+#introScreen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(10,10,10,.3)); pointer-events: none; }
+/* tout est centré sur l'écran ; le chat est sur le côté droit, derrière le bord du dernier panneau */
+#introScreen { padding: 0; }
+#introScreen .intro { position: relative; z-index: 2; }
+#introScreen .cards { gap: 18px; }
+#introScreen .card { width: 250px; }
+#introScreen .card p { font-size: 18px; }
+#introScreen .card h4 { font-size: 38px; }
+/* la mascotte en grand sur le côté droit, pieds coupés par le bas comme dans le jeu */
+#introCat { position: absolute; right: -96px; bottom: -40px; height: 560px; z-index: 1; pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.6)); animation: catIn .7s .15s cubic-bezier(.2,1.3,.4,1) backwards; }
+@keyframes catIn { from { transform: translateX(120%) rotate(8deg); } }
+#stage.portrait #introCat { display: none; }
+#stage.portrait #introScreen .intro { padding-right: 0; }
 .choices { display: flex; gap: 10px; justify-content: center; margin: 18px 0 6px; }
 .choices button { width: 76px; height: 56px; border: 3px solid var(--black); background: transparent; font-family: var(--display); font-size: 26px; color: var(--black); }
 .choices button[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
@@ -684,6 +853,7 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
   </aside>
 
   <div id="msg" aria-live="polite"></div>
+  <div id="jurInfo" aria-live="off" hidden></div>
 
   <div id="bar">
     <button class="icon-btn" id="sound" aria-pressed="true" aria-label="Sound on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
@@ -740,7 +910,7 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
   <!-- Fin du General Strike : total gagné -->
   <div class="overlay tap" id="wonScreen"><div class="splash">
     <div class="sp-kicker">General Strike over</div>
-    <div class="sp-num">You won</div>
+    <div class="sp-num" id="wonTitle">You won</div>
     <div class="sp-plate" id="wonAmount"></div>
     <p class="won-sub" id="wonText"></p>
     <button class="cta press" id="wonGo">Press to continue</button>
@@ -893,6 +1063,8 @@ const modes = () => Object.keys(MS).map(id => ({ id, label: MODE_LABEL[id] || id
 // Mises : en démo une liste fixe ; avec le serveur, uniquement celles renvoyées par /wallet/authenticate [242]
 let BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
 const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false, hunt: null };
+try { if (localStorage.getItem('revolt-sound') === 'off') state.sound = false; } catch (e) { /* stockage indisponible */ }
+const VERSION = '1.2.0'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
 const spinMode = () => state.hunt || 'base';            // mode joué par le bouton de lancer
 const costOf = mode => (MS[mode] || M.MODES[mode]).cost; // prix d'un mode, en × mise
 
@@ -974,6 +1146,8 @@ function placeMascot() {} // le chat est dans la scène, placé par le CSS
 })();
 
 /* ---------------- Son (voir sound.js) ---------------- */
+// état initial du bouton son (choix mémorisé)
+$('sound').setAttribute('aria-pressed', state.sound); $('sound').setAttribute('aria-label', state.sound ? 'Sound on' : 'Sound off');
 const S = window.RueSound;
 const sfx = (name, v) => { if (state.sound) S.play(name, v); };
 const armSound = () => {
@@ -1380,6 +1554,7 @@ function msg(html) { $('msg').innerHTML = html; }
 
 // Anime une partie déjà décidée (par la démo locale, le serveur Stake ou un replay).
 async function presentRound(round, mode, b) {
+  const realCost = costOf(M.MODES[mode] ? mode : 'base'); // prix réel du tour, en × la mise : on ne fête jamais un gain inférieur
   await spinTo(round.base.grid, M.STRIPS_BASE);
   const baseAmt = round.base.win * b;
   if (round.base.win > 0) {
@@ -1392,7 +1567,7 @@ async function presentRound(round, mode, b) {
   }
   let shown = baseAmt;
   $('win').textContent = fmt(shown);
-  if (round.base.win > 0) await bigWin(round.base.win, baseAmt); // gros gain en jeu normal
+  if (round.base.win > realCost) await bigWin(round.base.win, baseAmt); // gros gain en jeu normal (seulement s'il dépasse le prix du tour)
 
   if (round.bonus) {
     const B = round.bonus;
@@ -1437,7 +1612,7 @@ async function presentRound(round, mode, b) {
         bonusTotal += s.win * b; shown += s.win * b;
         const spinAmt = Math.min(shown, cap) - before; // ce que ce tour rapporte vraiment (gain max compris)
         $('fsWin').textContent = fmt(Math.min(bonusTotal, cap)); $('win').textContent = fmt(Math.min(shown, cap));
-        await bigWin(spinAmt / b, spinAmt); // gros gain sur CE tour : l'illustration et le montant du tour
+        if (Math.min(shown, cap) / b > realCost) await bigWin(spinAmt / b, spinAmt); // gros gain sur CE tour, seulement si la partie est déjà gagnante
         $('fsInfl').textContent = '×' + s.nextMult;
         restart($('fsInflBox'), 'bump');
         sfx('inflation');
@@ -1455,8 +1630,9 @@ async function presentRound(round, mode, b) {
     clearMarks();
     sfx('bonusEnd');
     // fin du bonus : « You won » avec le total du General Strike
-    const bonusWin = round.totalWin * b - baseAmt;
+    const bonusWin = round.totalWin * b - baseAmt, profit = round.totalWin > realCost;
     await overlay('wonScreen', () => {
+      $('wonTitle').textContent = profit ? 'You won' : 'Total'; // pas de « You won » quand le tour rapporte moins que son prix
       $('wonAmount').textContent = fmt(0); countUp($('wonAmount'), bonusWin, bonusWin > 0 ? 1800 : 1);
       $('wonText').textContent = round.capped ? `Max win reached: ${M.MAX_WIN.toLocaleString('en-US')}× the ${L.totalBet}`
         : `${B.spins.length} free spins · final multiplier ×${B.spins[B.spins.length - 1].nextMult}`;
@@ -1479,7 +1655,14 @@ function fatal(title, text) {
   $('errTitle').textContent = title; $('errText').textContent = text;
   $('errScreen').classList.add('show'); render();
 }
+// Gain d'une partie renvoyée par le RGS. Attention : le RGS donne payoutMultiplier en multiplicateur DÉCIMAL
+// (2 = 2×), contrairement aux fichiers de maths qui le stockent ×100. payout (micro-unités) fait foi s'il est présent.
+function roundPayout(r, b) {
+  if (typeof r.payout === 'number') return r.payout / MICRO;
+  return (+r.payoutMultiplier || 0) * b;
+}
 function rgsError(e) {
+  if (e.status === 423) { msg('New plays are paused for maintenance. Please try again shortly.'); stop(); return; }
   if (e.code === 'ERR_IPB') { msg(L.insufficient); stop(); return; }
   if (e.code === 'ERR_GLE') { msg(L.limits); stop(); return; }
   if (e.code === 'ERR_ACT') { msg('The server is busy. Please try again in a moment.'); stop(); return; }
@@ -1505,6 +1688,7 @@ async function play(mode) {
   const cost = b * costOf(mode);
   if (state.balance < cost) { msg(L.insufficient); stop(); return; } // [222] aucune requête sans solde suffisant
   state.busy = true; $('win').textContent = fmt(0);
+  const t0 = performance.now();
   let round, rgsRound = null;
   if (RGS_MODE) {
     render(); msg('…');
@@ -1518,11 +1702,13 @@ async function play(mode) {
   render();
   msg(M.MODES[mode].force >= 1 ? `<b>${MODE_LABEL[mode]}!</b> The barricades are going up.` : state.hunt ? `<b>${MODE_LABEL[mode]}</b> · ${fmt(cost)} per spin` : 'The reels are rolling…');
   await presentRound(round, mode, b);
-  const total = (rgsRound ? rgsRound.payoutMultiplier / 100 : round.totalWin) * b;
-  if (rgsRound) { if (rgsRound.payoutMultiplier > 0) await finishRound(); } else state.balance += total;
+  const total = rgsRound ? roundPayout(rgsRound, b) : round.totalWin * b;
+  if (rgsRound) { if (rgsRound.active !== false && total > 0) await finishRound(); } else state.balance += total; // [221] end-round seulement si gain
   if (state.fatal) return;
   $('win').textContent = fmt(total);
   if (total > 0) msg(`Total win: <b>${fmt(total)}</b>`);
+  session.net += total - cost; if (!$('jurInfo').hidden) updateJurInfo();
+  const left = minRoundMs() - (performance.now() - t0); if (left > 0) await new Promise(r => setTimeout(r, left)); // durée minimale d'un tour
   state.busy = false; render();
   if (state.auto > 0) {
     state.auto--; syncAuto();
@@ -1531,11 +1717,35 @@ async function play(mode) {
 }
 
 /* ---------------- Démarrage : démo, serveur Stake ou replay ---------------- */
+// Réglages de juridiction renvoyés par /wallet/authenticate (config.jurisdiction) : on les applique tous.
+const JUR = { disabledTurbo: false, disabledAutoplay: false, disabledBuyFeature: false, disabledSpacebar: false,
+  displayRTP: false, displaySessionTimer: false, displayNetPosition: false, minimumRoundDuration: 0 };
+const session = { start: Date.now(), net: 0 };
+function applyJurisdiction(j) {
+  Object.assign(JUR, j || {});
+  if (JUR.disabledTurbo) { state.turbo = false; $('turbo').hidden = true; }
+  if (JUR.disabledAutoplay) { state.auto = 0; $('auto').hidden = true; }
+  if (JUR.disabledBuyFeature) { state.hunt = null; $('buy').hidden = true; $('promoPrice').hidden = true; }
+  const show = JUR.displayRTP || JUR.displaySessionTimer || JUR.displayNetPosition;
+  $('jurInfo').hidden = !show;
+  if (show) { updateJurInfo(); setInterval(updateJurInfo, 1000); }
+}
+function updateJurInfo() {
+  const parts = [];
+  if (JUR.displayRTP) parts.push(`RTP <b>${(MS[spinMode()] || MS.base).rtp.toFixed(2)}%</b>`);
+  if (JUR.displaySessionTimer) { const s = Math.floor((Date.now() - session.start) / 1000); parts.push(`Session <b>${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}</b>`); }
+  if (JUR.displayNetPosition) parts.push(`Net <b>${session.net < 0 ? '−' : '+'}${fmt(Math.abs(session.net))}</b>`);
+  $('jurInfo').innerHTML = parts.join('<span aria-hidden="true">·</span>');
+}
+// durée minimale d'un tour (valeur en millisecondes ; une petite valeur est lue comme des secondes)
+const minRoundMs = () => { const v = +JUR.minimumRoundDuration || 0; return v > 0 && v < 100 ? v * 1000 : v; };
+
 function applyAuth(a) {
   state.balance = a.balance.amount / MICRO;
   if (a.balance.currency) CURRENCY = String(a.balance.currency).toUpperCase();
   const cfg = a.config || {};
   if (cfg.jurisdiction && cfg.jurisdiction.socialCasino) setSocial(true);
+  applyJurisdiction(cfg.jurisdiction);
   let levels = (cfg.betLevels || []).map(v => v / MICRO).filter(v => v > 0);
   if (!levels.length && cfg.minBet && cfg.maxBet && cfg.stepBet) {
     for (let v = cfg.minBet; v <= cfg.maxBet; v += cfg.stepBet) levels.push(v / MICRO);
@@ -1555,8 +1765,8 @@ async function resumeRound(r) {
   state.busy = true;
   const round = roundFromEvents(r);
   await presentRound(round, mode, b);
-  const total = r.payoutMultiplier / 100 * b;
-  if (r.payoutMultiplier > 0) await finishRound();
+  const total = roundPayout(r, b);
+  if (total > 0) await finishRound();
   if (state.fatal) return;
   $('win').textContent = fmt(total);
   msg(`Round finished. Total win: <b>${fmt(total)}</b>`);
@@ -1570,7 +1780,7 @@ async function initReplay() {
   state.busy = true; render(); msg('Loading replay…');
   try {
     const data = await RGS.replay(params.get('rgs_url'), params.get('game'), params.get('version'), params.get('mode') || 'base', params.get('event'));
-    replayData = { round: roundFromEvents(data), payout: (data.payoutMultiplier || 0) / 100, costMul: data.costMultiplier || 1, mode: params.get('mode') || 'base', amount };
+    replayData = { round: roundFromEvents(data), payout: +data.payoutMultiplier || 0, costMul: data.costMultiplier || 1, mode: params.get('mode') || 'base', amount };
   } catch (e) { fatal('Replay unavailable', 'This round could not be loaded. Please check the link and try again.'); return; }
   state.busy = false; replayReady(false);
 }
@@ -1662,6 +1872,7 @@ function renderShop() {
     const btn = o.kind === 'activate' ? `<button class="act" data-id="${o.id}">${on ? 'Deactivate' : 'Activate'}</button>`
       : `<button data-id="${o.id}"${state.balance < b * c ? ' disabled' : ''}>${L.buyWord}</button>`;
     return `<div class="offer${on ? ' on' : ''}"><span class="on-badge">Active</span><div class="offer-art">${art}</div><h4>${o.title}</h4><p>${o.desc()}</p>
+      <div class="offer-stats">RTP ${MS[o.id].rtp.toFixed(2)}% · Max ${MS[o.id].maxWin.toLocaleString('en-US')}×</div>
       <div class="price">${price}<small>${o.kind === 'activate' ? `${c}× the ${L.bet}, every spin` : `${c}× the ${L.bet}`}</small></div>${btn}</div>`;
   }).join('');
 }
@@ -1703,6 +1914,7 @@ $('sound').addEventListener('click', e => {
   state.sound = !state.sound;
   e.currentTarget.setAttribute('aria-pressed', state.sound);
   e.currentTarget.setAttribute('aria-label', state.sound ? 'Sound on' : 'Sound off');
+  try { localStorage.setItem('revolt-sound', state.sound ? 'on' : 'off'); } catch (err) { /* stockage indisponible */ }
   S.enable(state.sound);
 });
 $('info').addEventListener('click', () => { buildRules(); $('rules').classList.add('show'); $('rulesClose').focus(); });
@@ -1711,6 +1923,7 @@ document.addEventListener('keydown', e => {
   // La barre d'espace lance un tour (exigence Stake), sauf si un écran est ouvert
   if (e.code === 'Space') {
     e.preventDefault();
+    if (JUR.disabledSpacebar) return;
     const open = document.querySelector('.overlay.show');
     if (open) { if (open.classList.contains('tap')) open.click(); }
     else (REPLAY ? runReplay() : play('base'));
@@ -1786,7 +1999,8 @@ function buildRules() {
     <dt>Balance / Win</dt><dd>Your current balance, and the win of the current round.</dd>
   </dl>
 
-  <p class="disclaimer">Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a disconnection, reload the game to complete any unfinished round. The expected return is calculated over many plays. The game display is not representative of any physical device and is for illustrative purposes only. Winnings are settled according to the amount received from the Remote Game Server and not from events within the web browser. TM and © 2026 Revolt. All rights reserved.</p>`;
+  <p class="disclaimer">Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a disconnection, reload the game to complete any unfinished round. The expected return is calculated over many plays. The game display is not representative of any physical device and is for illustrative purposes only. Winnings are settled according to the amount received from the Remote Game Server and not from events within the web browser. TM and © 2026 Revolt. All rights reserved.</p>
+  <p class="disclaimer">Version ${VERSION}</p>`;
 }
 
 /* ---------------- Bandeau d'infos ---------------- */
