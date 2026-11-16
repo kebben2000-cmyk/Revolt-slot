@@ -135,6 +135,10 @@ body.strike #stage.portrait #side .promo { display: none; }
 .fs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 !important; }
 #stage.portrait .fs-row { display: contents; }
 .fs-left { background: var(--paper); color: var(--black); font-size: 30px; }
+.fs-row > div { padding: 6px 8px; display: grid; justify-items: center; align-content: center; line-height: 1; font-family: var(--display); text-transform: uppercase; }
+.fs-count small { margin: 0 0 4px; font-family: var(--display); text-transform: uppercase; font-size: 16px; letter-spacing: .06em; }
+.fs-count span { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fs-count.bump { animation: bump .5s; background: var(--yellow); }
 .fs-infl { background: var(--yellow); color: var(--black); font-size: 30px; }
 .fs-infl.bump { animation: bump .5s; }
 @keyframes bump { 30% { transform: scale(1.25) rotate(-3deg); } }
@@ -576,7 +580,9 @@ body.strike #stage.portrait #side .promo { display: none; }
 .cards { display: flex; gap: 40px; align-items: flex-start; justify-content: center; margin-top: 18px; }
 .card {
   position: relative; width: 310px; padding: 30px 18px 22px; display: grid; justify-items: center; text-align: center;
-  background: linear-gradient(180deg, #2b2a28, #171615); border: 4px solid var(--black);
+  /* légère transparence : on devine le décor derrière les panneaux */
+  background: linear-gradient(180deg, rgba(43,42,40,.4), rgba(23,22,21,.55)); border: 4px solid var(--black);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
   box-shadow: 0 0 0 4px var(--concrete), 0 18px 40px rgba(0,0,0,.6); transform: rotate(-1.5deg);
 }
 .card::before { /* ruban de chantier en haut du panneau */
@@ -597,7 +603,7 @@ body.strike #stage.portrait #side .promo { display: none; }
   margin: 14px 0 6px; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 42px; line-height: .95;
   color: var(--yellow); text-shadow: 3px 3px 0 var(--red), 5px 5px 0 var(--black);
 }
-.card p { margin: 0; font-family: var(--display); text-transform: uppercase; font-size: 20px; line-height: 1.2; color: var(--paper); }
+.card p { text-shadow: 0 2px 3px #000; margin: 0; font-family: var(--display); text-transform: uppercase; font-size: 20px; line-height: 1.2; color: var(--paper); }
 #introScreen .press { margin-top: 20px; }
 #stage.portrait .cards { flex-direction: column; gap: 26px; margin-top: 26px; }
 #stage.portrait .card { width: 600px; grid-template-columns: 220px 1fr; text-align: left; justify-items: start; align-items: center; column-gap: 18px; padding: 26px 22px 18px; }
@@ -605,6 +611,66 @@ body.strike #stage.portrait #side .promo { display: none; }
 #stage.portrait .card-art { grid-row: 1 / 3; height: 160px; }
 #stage.portrait .card h4 { margin-top: 0; }
 #stage.portrait .intro .logo { font-size: 110px; }
+/* ---------- Boutique de bonus ---------- */
+#shopScreen { padding: 18px 24px; background: rgba(10,10,10,.86); }
+.shop { width: 100%; display: grid; justify-items: center; gap: 18px; animation: pop .45s cubic-bezier(.3,1.5,.5,1); }
+.shop-head { display: flex; align-items: center; gap: 18px; }
+.shop-head h2 { margin: 0; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 54px; line-height: 1;
+  background: var(--red); color: var(--paper); padding: 2px 26px 8px; transform: rotate(-2deg); text-shadow: 3px 3px 0 var(--black);
+  clip-path: polygon(1% 6%, 12% 0, 40% 5%, 63% 0, 99% 4%, 100% 50%, 98% 96%, 70% 100%, 33% 95%, 4% 100%, 0 55%); }
+#shopClose { position: absolute; right: 26px; top: 20px; width: 54px; height: 54px; border-radius: 50%; border: 3px solid var(--paper);
+  background: var(--black); color: var(--paper); font-family: var(--display); font-size: 30px; line-height: 1; padding: 0; }
+.offers { display: grid; grid-template-columns: repeat(4, 268px); gap: 18px; }
+.offer { position: relative; display: grid; grid-template-rows: auto auto 1fr auto auto; background: #ece4d3; color: var(--black);
+  border: 4px solid var(--black); box-shadow: 0 0 0 3px var(--concrete), 0 14px 30px rgba(0,0,0,.6); text-align: center; }
+.offer.on { box-shadow: 0 0 0 4px var(--yellow), 0 0 30px rgba(255,212,0,.7); }
+.offer-art { position: relative; height: 150px; overflow: hidden; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 60%, rgba(225,6,0,.55), transparent 70%), #1d1c1a; border-bottom: 4px solid var(--black); }
+.offer-art::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 12px, var(--black) 12px 24px); }
+.offer-art img { width: 108px; height: 108px; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(0,0,0,.7)); }
+.offer-art img.l { position: absolute; left: 22px; top: 30px; transform: rotate(-14deg); width: 92px; height: 92px; }
+.offer-art img.r { position: absolute; right: 22px; top: 30px; transform: rotate(14deg); width: 92px; height: 92px; }
+.offer-art .big-tag { position: absolute; right: 10px; bottom: 4px; font-family: var(--display); font-size: 58px; line-height: 1; color: var(--yellow);
+  -webkit-text-stroke: 6px var(--black); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--red); transform: rotate(-8deg); }
+.offer h4 { margin: 0; padding: 6px 8px 8px; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 28px; line-height: 1;
+  background: var(--black); color: var(--yellow); }
+.offer p { margin: 0; padding: 12px 14px 4px; font-size: 15px; line-height: 1.3; align-self: center; }
+.offer .price { font-family: var(--display); font-size: 40px; line-height: 1; padding: 6px 0 10px; color: var(--black); text-shadow: 2px 2px 0 rgba(0,0,0,.15); }
+.offer .price small { display: block; font-family: var(--type); font-size: 12px; color: #555; margin-top: 3px; }
+.offer button { margin: 0 14px 14px; padding: 10px 0 12px; border: 3px solid var(--black); font-family: var(--display); font-size: 24px; text-transform: uppercase;
+  background: var(--red); color: var(--paper); box-shadow: 0 5px 0 var(--black); }
+.offer button.act { background: var(--yellow); color: var(--black); }
+.offer.on button.act { background: var(--black); color: var(--yellow); }
+.offer button:disabled { filter: grayscale(.8); opacity: .55; cursor: default; }
+.offer .on-badge { display: none; position: absolute; left: 50%; top: 18px; transform: translateX(-50%) rotate(-4deg); z-index: 2;
+  font-family: var(--display); text-transform: uppercase; font-size: 18px; background: var(--yellow); color: var(--black); padding: 1px 12px 3px; border: 2px solid var(--black); }
+.offer.on .on-badge { display: block; }
+.shop-bet { display: flex; align-items: center; gap: 22px; background: rgba(18,18,18,.96); border: 3px solid var(--paper); padding: 6px 14px; }
+.shop-bet button { width: 52px; height: 46px; border: 3px solid var(--paper); background: var(--black); color: var(--paper); font-family: Arial, sans-serif; font-weight: 900; font-size: 32px; line-height: 1; padding: 0; }
+.shop-bet button:disabled { opacity: .3; cursor: default; }
+.shop-bet span { font-family: var(--display); font-size: 34px; text-transform: uppercase; color: var(--paper); min-width: 230px; text-align: center; }
+.shop-bet b { color: var(--yellow); font-weight: normal; }
+#stage.portrait .offers { grid-template-columns: repeat(2, 320px); gap: 16px; }
+#stage.portrait .offer-art { height: 120px; }
+/* le bouton Bonus signale un mode « hunt » actif */
+#buy.hunting { background: radial-gradient(circle at 35% 30%, #ff6a5f, var(--red) 45%, var(--red-deep)); color: var(--paper); animation: huntPulse 1.2s ease-in-out infinite alternate; }
+@keyframes huntPulse { to { box-shadow: 0 0 0 5px var(--yellow), 0 10px 0 5px var(--black), 0 0 46px rgba(255,212,0,.9); } }
+/* accueil : le décor du jeu en fond, au bon format (cover) */
+#introScreen { background: url(assets/bg.jpg) center 35% / cover no-repeat; }
+#introScreen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(10,10,10,.3)); pointer-events: none; }
+/* tout est centré sur l'écran ; le chat est sur le côté droit, derrière le bord du dernier panneau */
+#introScreen { padding: 0; }
+#introScreen .intro { position: relative; z-index: 2; }
+#introScreen .cards { gap: 18px; }
+#introScreen .card { width: 250px; }
+#introScreen .card p { font-size: 18px; }
+#introScreen .card h4 { font-size: 38px; }
+/* la mascotte en grand sur le côté droit, pieds coupés par le bas comme dans le jeu */
+#introCat { position: absolute; right: -96px; bottom: -40px; height: 560px; z-index: 1; pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.6)); animation: catIn .7s .15s cubic-bezier(.2,1.3,.4,1) backwards; }
+@keyframes catIn { from { transform: translateX(120%) rotate(8deg); } }
+#stage.portrait #introCat { display: none; }
+#stage.portrait #introScreen .intro { padding-right: 0; }
 .choices { display: flex; gap: 10px; justify-content: center; margin: 18px 0 6px; }
 .choices button { width: 76px; height: 56px; border: 3px solid var(--black); background: transparent; font-family: var(--display); font-size: 26px; color: var(--black); }
 .choices button[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
@@ -724,13 +790,13 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
     <div class="promo">
       <p class="tagline">Everything goes up. Except wages.</p>
       <h3>General Strike</h3>
-      <p>3 Barricades = <b>10+ free spins</b>. Golden Coins pump up the multiplier, and it never goes down.</p>
+      <p>3 Barricades = <b>10+ free spins</b>. In the feature, 2 Barricades = <b>+2 spins</b>. Golden Coins pump up the multiplier, and it never goes down.</p>
       <p class="price" id="promoPrice"></p>
     </div>
     <div class="fs">
       <div class="fs-title">General Strike</div>
       <div class="fs-row">
-        <div class="fs-left"><span id="fsLeft">10</span><small>spins left</small></div>
+        <div class="fs-left fs-count" id="fsCountBox"><small>Spin</small><span id="fsLeft">1/10</span></div>
         <div class="fs-infl" id="fsInflBox"><span id="fsInfl">×1</span><small>multiplier</small></div>
       </div>
       <div class="fs-left"><span id="fsWin">0.00</span><small>feature win</small></div>
@@ -757,7 +823,7 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
     <div id="spinWrap"><button id="spin" aria-label="Spin (space bar)"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M50 32a18 18 0 1 1-6-13.4"/><path class="head" d="M52 8v19H33z"/></svg></button></div>
   </div>
 
-  <button id="buy" aria-label="Buy the General Strike feature"></button>
+  <button id="buy" aria-label="Bonus shop"></button>
   <div id="mascot" aria-hidden="true"><video id="mascotVid" muted loop playsinline autoplay preload="auto" disablepictureinpicture></video><canvas id="mascotCv" width="340" height="444"></canvas></div>
   <div id="fx" aria-hidden="true"></div>
 
@@ -781,6 +847,8 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
       <span>The <b>General Strike</b> is on</span>
       <span>Megaphones take over their whole reel</span>
       <span>Golden Coins pump up the multiplier</span>
+      <span>2 Barricades = <b>+2 spins</b>, 3 = <b>+3</b></span>
+      <span id="bsStart"></span>
     </div>
     <div class="sp-props"><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""></div>
     <button class="cta press" id="bsGo">Press to continue</button>
@@ -796,7 +864,7 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
   </div></div>
 
   <!-- Accueil : les trois atouts du jeu -->
-  <div class="overlay tap" id="introScreen"><div class="intro">
+  <div class="overlay tap" id="introScreen"><img id="introCat" src="assets/mascot/chat.png" alt=""><div class="intro">
     <h2 class="logo">Rev<span>olt</span></h2>
     <div class="cards">
       <div class="card">
@@ -805,9 +873,9 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
         <p>Land 3 barricades to trigger 10 or more free spins</p>
       </div>
       <div class="card mid">
-        <div class="card-art"><img src="assets/symbols/euro.png" alt=""><span class="mult">+5</span></div>
+        <div class="card-art"><img src="assets/symbols/euro.png" alt=""><span class="mult">+50</span></div>
         <h4>Golden Coin multi</h4>
-        <p>Golden Coins pump up the multiplier. It never goes down</p>
+        <p>Golden Coins add up to +50 to the multiplier. It never goes down</p>
       </div>
       <div class="card">
         <div class="card-art max"><img src="assets/wins/may68.webp" alt=""><span class="mult" id="introMax"></span></div>
@@ -831,6 +899,20 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
     <button class="alt" id="autoCancel">Cancel</button>
     <button class="cta" id="autoStart">Start autoplay</button>
   </div></div>
+
+  <!-- Boutique de bonus : modes « hunt » à activer, bonus à acheter -->
+  <div class="overlay" id="shopScreen" role="dialog" aria-labelledby="shopTitle">
+    <button id="shopClose" aria-label="Close">✕</button>
+    <div class="shop">
+      <div class="shop-head"><h2 id="shopTitle">Bonus shop</h2></div>
+      <div class="offers" id="offers"></div>
+      <div class="shop-bet">
+        <button id="shopBetDown" aria-label="Decrease">−</button>
+        <span><span id="shopBetLbl">Bet</span> <b id="shopBet"></b></span>
+        <button id="shopBetUp" aria-label="Increase">+</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Confirmation de l'achat du bonus (coûte plus de 2× la mise) -->
   <div class="overlay" id="buyScreen" role="dialog" aria-labelledby="buyTitle"><div class="poster">
@@ -889,12 +971,14 @@ function wordsFor(social) {
     buyBtn: 'Get General Strike', buyMode: 'General Strike feature', costLbl: 'Played for', costs: 'can be played for',
     bought: 'General Strike instantly triggered.', insufficient: 'Not enough coins. Lower your play amount.',
     confirmQ: 'Get the General Strike for', confirmBtn: 'Get bonus', limits: 'Play limits reached.',
+    buyWord: 'Play', shop: 'Bonus features', getVerb: 'Get',
   } : {
     bet: 'bet', Bet: 'Bet', bets: 'bets', totalBet: 'total bet', TotalBet: 'Total bet',
     pays: 'pays', Pays: 'Pays', pay: 'pay', paytable: 'paytable', Paytable: 'Paytable',
     buyBtn: 'Buy General Strike', buyMode: 'Bonus buy', costLbl: 'Cost', costs: 'costs',
     bought: 'General Strike bought. The barricades are going up.', insufficient: 'Insufficient balance. Lower your bet.',
     confirmQ: 'Buy the General Strike for', confirmBtn: 'Buy bonus', limits: 'Gambling limits reached.',
+    buyWord: 'Buy', shop: 'Bonus shop', getVerb: 'Buy',
   };
 }
 let L = wordsFor(SOCIAL);
@@ -906,15 +990,28 @@ const NAMES = { bidon: 'Fuel Can', portefeuille: 'Empty Wallet', ticket: 'Receip
 const nameOf = sym => NAMES[KEYS[sym]];
 
 // RTP et gain max par mode : calculés depuis les fichiers de maths publiés (math-summary.js)
-const MS = window.REVOLT_MATH_SUMMARY || { base: { cost: 1, rtp: 96, maxWin: M.MAX_WIN }, bonus: { cost: M.BONUS_BUY_COST, rtp: 96, maxWin: M.MAX_WIN } };
-const modes = () => [
-  { id: 'base', label: 'Base game', cost: MS.base.cost, rtp: MS.base.rtp.toFixed(2) + '%', maxWin: MS.base.maxWin },
-  { id: 'buy', label: L.buyMode, cost: MS.bonus.cost, rtp: MS.bonus.rtp.toFixed(2) + '%', maxWin: MS.bonus.maxWin },
+const MS = window.REVOLT_MATH_SUMMARY ||
+  Object.fromEntries(Object.entries(M.MODES).map(([k, m]) => [k, { cost: m.cost, rtp: 96, maxWin: M.MAX_WIN, bonusEvery: m.force >= 1 ? 1 : 185 }]));
+// Offres de la boutique. kind « activate » = mode de mise (chaque tour coûte cost × la mise) ; « buy » = bonus immédiat.
+const often = id => Math.round(MS.base.bonusEvery / MS[id].bonusEvery);
+const OFFERS = [
+  { id: 'hunt', kind: 'activate', title: 'Riot Hunt', art: 'hunt',
+    desc: () => `The General Strike triggers about ${often('hunt')} times more often than in the base game.` },
+  { id: 'superhunt', kind: 'activate', title: 'Super Riot Hunt', art: 'superhunt',
+    desc: () => `The General Strike triggers about ${often('superhunt')} times more often than in the base game.` },
+  { id: 'bonus', kind: 'buy', title: 'General Strike', art: 'bonus',
+    desc: () => `${M.SCATTER_SPINS[3]}+ free spins. The multiplier starts at ×${M.MODES.bonus.startMult} and never goes down.` },
+  { id: 'superbonus', kind: 'buy', title: 'Super Strike', art: 'superbonus',
+    desc: () => `${M.SCATTER_SPINS[3]}+ free spins. The multiplier starts at ×${M.MODES.superbonus.startMult} and never goes down.` },
 ];
+const MODE_LABEL = { base: 'Base game', hunt: 'Riot Hunt', superhunt: 'Super Riot Hunt', bonus: 'General Strike', superbonus: 'Super Strike' };
+const modes = () => Object.keys(MS).map(id => ({ id, label: MODE_LABEL[id] || id, cost: MS[id].cost, rtp: MS[id].rtp.toFixed(2) + '%', maxWin: MS[id].maxWin }));
 
 // Mises : en démo une liste fixe ; avec le serveur, uniquement celles renvoyées par /wallet/authenticate [242]
 let BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
-const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false };
+const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false, hunt: null };
+const spinMode = () => state.hunt || 'base';            // mode joué par le bouton de lancer
+const costOf = mode => (MS[mode] || M.MODES[mode]).cost; // prix d'un mode, en × mise
 
 // Devises [219] et montants inférieurs au centime [273]
 const CUR = {
@@ -1366,11 +1463,14 @@ async function bigWin(x, amount) {
 function render() {
   $('balance').textContent = fmt(state.balance);
   $('bet').textContent = fmt(bet());
-  $('buy').innerHTML = `<b>Bonus</b><small>${fmt(bet() * M.BONUS_BUY_COST)}</small>`;
-  $('promoPrice').innerHTML = `${SOCIAL ? 'Get it now for' : 'Buy it for'} <b>${fmt(bet() * M.BONUS_BUY_COST)}</b>`;
+  $('buy').innerHTML = state.hunt ? `<b>Hunt</b><small>${MODE_LABEL[state.hunt].replace(' Riot', '')} on</small>` : `<b>Bonus</b><small>${SOCIAL ? 'Features' : 'Shop'}</small>`;
+  $('buy').classList.toggle('hunting', !!state.hunt);
+  $('promoPrice').innerHTML = `${SOCIAL ? 'Get it now for' : 'Buy it for'} <b>${fmt(bet() * costOf('bonus'))}</b>`;
+  $('betLbl').textContent = state.hunt ? `${L.Bet} ×${costOf(state.hunt)}` : L.Bet;
+  if ($('shopScreen').classList.contains('show')) renderShop();
   const lock = state.busy || state.fatal;
   $('spin').disabled = lock;
-  $('buy').disabled = lock || state.balance < bet() * M.BONUS_BUY_COST;
+  $('buy').disabled = lock;
   $('betDown').disabled = lock || state.betIdx === 0;
   $('betUp').disabled = lock || state.betIdx === BETS.length - 1;
 }
@@ -1395,14 +1495,20 @@ async function presentRound(round, mode, b) {
   if (round.bonus) {
     const B = round.bonus;
     sfx('bonus');
-    await overlay('bonusScreen', () => { $('bsNum').textContent = B.spinsAwarded; });
+    await overlay('bonusScreen', () => {
+      $('bsNum').textContent = B.spinsAwarded;
+      $('bsStart').innerHTML = (B.startMult || 1) > 1 ? `Super Strike: the multiplier starts at <b>×${B.startMult}</b>` : 'The multiplier starts at <b>×1</b> and never goes down';
+    });
     document.body.classList.add('strike'); smokeBoost = 1;
     let bonusTotal = 0;
-    $('fsInfl').textContent = '×1'; $('fsWin').textContent = fmt(0);
+    $('fsInfl').textContent = '×' + (B.startMult || 1); $('fsWin').textContent = fmt(0);
+    // compteur « SPIN 2/10 » : le total grandit quand des barricades relancent le bonus
+    let spinNo = 0, spinTotal = B.spinsAwarded;
+    $('fsLeft').textContent = `1/${spinTotal}`;
     for (const s of B.spins) {
-      $('fsLeft').textContent = s.left + 1;
+      spinNo++;
+      $('fsLeft').textContent = `${spinNo}/${spinTotal}`;
       await spinTo(s.raw, M.STRIPS_FREE);
-      $('fsLeft').textContent = s.left;
       if (s.euros.length) {
         for (const [r, row, v] of s.euros) {
           const c = cellAt(r, row), tag = document.createElement('b');
@@ -1438,8 +1544,10 @@ async function presentRound(round, mode, b) {
         await wait(350);
       }
       if (s.retrigger) {
-        sfx('retrigger'); msg(`<b>+${s.retrigger} spins!</b> More barricades go up.`);
-        await showWins([], s.scatterCells, 0); await wait(300);
+        sfx('retrigger'); msg(`<b>${s.retrigger} barricades: +${s.retrigger} spins!</b> The strike goes on.`);
+        await showWins([], s.scatterCells, 0);
+        spinTotal += s.retrigger; $('fsLeft').textContent = `${spinNo}/${spinTotal}`; restart($('fsCountBox'), 'bump');
+        await wait(500);
       }
     }
     clearMarks();
@@ -1490,21 +1598,23 @@ function setBetTo(value) {
 async function play(mode) {
   if (state.busy || state.fatal || REPLAY) return;
   const b = bet();
-  const cost = mode === 'buy' ? b * M.BONUS_BUY_COST : b;
+  if (mode === 'base') mode = spinMode();
+  if (mode === 'buy') mode = 'bonus';
+  const cost = b * costOf(mode);
   if (state.balance < cost) { msg(L.insufficient); stop(); return; } // [222] aucune requête sans solde suffisant
   state.busy = true; $('win').textContent = fmt(0);
   let round, rgsRound = null;
   if (RGS_MODE) {
     render(); msg('…');
     try {
-      const r = await api.play(Math.round(b * MICRO), mode === 'buy' ? 'bonus' : 'base');
+      const r = await api.play(Math.round(b * MICRO), mode);
       rgsRound = r.round; state.balance = r.balance.amount / MICRO; round = roundFromEvents(rgsRound);
     } catch (e) { state.busy = false; rgsError(e); render(); return; }
   } else {
     state.balance -= cost; round = M.playRound(mode);
   }
   render();
-  msg(mode === 'buy' ? `<b>${L.bought}</b>` : 'The reels are rolling…');
+  msg(M.MODES[mode].force >= 1 ? `<b>${MODE_LABEL[mode]}!</b> The barricades are going up.` : state.hunt ? `<b>${MODE_LABEL[mode]}</b> · ${fmt(cost)} per spin` : 'The reels are rolling…');
   await presentRound(round, mode, b);
   const total = (rgsRound ? rgsRound.payoutMultiplier / 100 : round.totalWin) * b;
   if (rgsRound) { if (rgsRound.payoutMultiplier > 0) await finishRound(); } else state.balance += total;
@@ -1514,7 +1624,7 @@ async function play(mode) {
   state.busy = false; render();
   if (state.auto > 0) {
     state.auto--; syncAuto();
-    if (state.auto > 0) { await wait(400); play('base'); }
+    if (state.auto > 0) { await wait(400); play(spinMode()); }
   }
 }
 
@@ -1538,7 +1648,7 @@ function applyAuth(a) {
 // Une partie interrompue est reprise avec SA mise (pas la mise par défaut) [187]
 async function resumeRound(r) {
   setBetTo(r.amount / MICRO); render();
-  const mode = r.mode === 'bonus' ? 'buy' : 'base', b = bet();
+  const mode = M.MODES[r.mode] ? r.mode : 'base', b = bet();
   msg('Resuming your unfinished round…');
   state.busy = true;
   const round = roundFromEvents(r);
@@ -1564,7 +1674,7 @@ async function initReplay() {
 }
 function replayInfo() {
   const d = replayData, cost = d.amount * d.costMul;
-  return `<b>REPLAY</b> · ${L.Bet}: ${fmt(d.amount)}` + (d.costMul > 1 ? ` · ${d.mode === 'bonus' ? 'General Strike' : d.mode} ×${d.costMul} · Real cost: ${fmt(cost)}` : '');
+  return `<b>REPLAY</b> · ${L.Bet}: ${fmt(d.amount)}` + (d.costMul !== 1 ? ` · ${MODE_LABEL[d.mode] || d.mode} ×${d.costMul} · Real cost: ${fmt(cost)}` : '');
 }
 const SPIN_ICON = "<svg viewBox=\"0 0 64 64\" aria-hidden=\"true\"><path d=\"M50 32a18 18 0 1 1-6-13.4\"/><path class=\"head\" d=\"M52 8v19H33z\"/></svg>";
 function replayReady(again) {
@@ -1575,7 +1685,7 @@ function replayReady(again) {
 async function runReplay() {
   if (!replayData || state.busy || state.fatal) return;
   state.busy = true; render(); $('win').textContent = fmt(0);
-  const d = replayData, mode = d.mode === 'bonus' ? 'buy' : 'base';
+  const d = replayData, mode = M.MODES[d.mode] ? d.mode : 'base';
   await presentRound(d.round, mode, d.amount);
   const total = d.payout * d.amount;
   $('win').textContent = fmt(total);
@@ -1584,7 +1694,7 @@ async function runReplay() {
 }
 // Écran d'accueil (pas en replay) : présente le General Strike, le multiplicateur et le gain max.
 function intro() {
-  const max = (window.REVOLT_MATH_SUMMARY && REVOLT_MATH_SUMMARY.base.maxWin) || M.MAX_WIN;
+  const max = M.MAX_WIN; // 15 000× dans tous les modes
   $('introMax').textContent = max.toLocaleString('en-US') + '×';
   $('introMaxText').textContent = `Win up to ${max.toLocaleString('en-US')}× the ${L.totalBet}!`;
   return overlay('introScreen', null, 1);
@@ -1617,7 +1727,7 @@ function syncAuto() {
 }
 $('auto').addEventListener('click', () => {
   if (state.auto > 0) { state.auto = 0; syncAuto(); return; }
-  $('autoText').textContent = `Spins will be played automatically at ${fmt(bet())} each. You can stop at any time with the Stop button.`;
+  $('autoText').textContent = `Spins will be played automatically at ${fmt(bet() * costOf(spinMode()))} each. You can stop at any time with the Stop button.`;
   $('autoScreen').classList.add('show'); $('autoStart').focus();
 });
 $('autoChoices').addEventListener('click', e => {
@@ -1628,21 +1738,61 @@ $('autoChoices').addEventListener('click', e => {
 $('autoCancel').addEventListener('click', () => $('autoScreen').classList.remove('show'));
 $('autoStart').addEventListener('click', () => {
   $('autoScreen').classList.remove('show');
-  state.auto = autoChoice; syncAuto(); if (!state.busy) play('base');
+  state.auto = autoChoice; syncAuto(); if (!state.busy) play(spinMode());
 });
 
 $('spin').addEventListener('click', () => (REPLAY ? runReplay() : play('base')));
+/* ---------- Boutique de bonus ---------- */
+const OFFER_ART = {
+  hunt: '<img class="l" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""><span class="big-tag">×{n}</span>',
+  superhunt: '<img class="l" src="assets/symbols/scatter.png" alt=""><img class="r" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""><span class="big-tag">×{n}</span>',
+  bonus: '<img class="l" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""><span class="big-tag">10+</span>',
+  superbonus: '<img class="l" src="assets/symbols/wild.png" alt=""><img src="assets/symbols/euro.png" alt=""><span class="big-tag">×{m}</span>',
+};
+function renderShop() {
+  const b = bet();
+  $('shopTitle').textContent = L.shop;
+  $('shopBetLbl').textContent = L.Bet; $('shopBet').textContent = fmt(b);
+  $('shopBetDown').disabled = state.betIdx === 0; $('shopBetUp').disabled = state.betIdx === BETS.length - 1;
+  $('offers').innerHTML = OFFERS.filter(o => MS[o.id]).map(o => {
+    const c = costOf(o.id), on = state.hunt === o.id, price = fmt(b * c);
+    const art = OFFER_ART[o.art].replace('{n}', often(o.id)).replace('{m}', M.MODES[o.id].startMult);
+    const btn = o.kind === 'activate' ? `<button class="act" data-id="${o.id}">${on ? 'Deactivate' : 'Activate'}</button>`
+      : `<button data-id="${o.id}"${state.balance < b * c ? ' disabled' : ''}>${L.buyWord}</button>`;
+    return `<div class="offer${on ? ' on' : ''}"><span class="on-badge">Active</span><div class="offer-art">${art}</div><h4>${o.title}</h4><p>${o.desc()}</p>
+      <div class="price">${price}<small>${o.kind === 'activate' ? `${c}× the ${L.bet}, every spin` : `${c}× the ${L.bet}`}</small></div>${btn}</div>`;
+  }).join('');
+}
+let pendingOffer = null;
 $('buy').addEventListener('click', () => {
   if (state.busy || state.fatal || REPLAY) return;
-  const c = bet() * M.BONUS_BUY_COST;
-  if (state.balance < c) { msg(L.insufficient); return; }
-  $('buyText').textContent = L.confirmQ + ' ' + M.BONUS_BUY_COST + '× the ' + L.totalBet + '?';
-  $('buyCost').textContent = fmt(c);
-  $('buyConfirm').textContent = L.confirmBtn;
+  renderShop(); $('shopScreen').classList.add('show'); $('shopClose').focus();
+});
+$('shopClose').addEventListener('click', () => $('shopScreen').classList.remove('show'));
+$('shopBetUp').addEventListener('click', () => { state.betIdx = Math.min(BETS.length - 1, state.betIdx + 1); render(); renderShop(); });
+$('shopBetDown').addEventListener('click', () => { state.betIdx = Math.max(0, state.betIdx - 1); render(); renderShop(); });
+$('offers').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn || btn.disabled) return;
+  const o = OFFERS.find(x => x.id === btn.dataset.id), c = costOf(o.id), b = bet();
+  if (o.kind === 'activate' && state.hunt === o.id) { state.hunt = null; render(); msg(`<b>${o.title}</b> off. Back to the base game.`); return; }
+  if (o.kind === 'buy' && state.balance < b * c) { msg(L.insufficient); return; }
+  // toute offre qui coûte plus de 2× la mise est confirmée explicitement [31]
+  pendingOffer = o;
+  $('buyTitle').textContent = o.title;
+  $('buyText').textContent = o.kind === 'activate'
+    ? `Activate ${o.title}? Every spin will cost ${c}× the ${L.bet}.`
+    : `${L.getVerb} ${o.title} for ${c}× the ${L.totalBet}?`;
+  $('buyCost').textContent = o.kind === 'activate' ? `${fmt(b * c)} per spin` : fmt(b * c);
+  $('buyConfirm').textContent = o.kind === 'activate' ? 'Activate' : L.confirmBtn;
   $('buyScreen').classList.add('show'); $('buyConfirm').focus();
 });
 $('buyCancel').addEventListener('click', () => $('buyScreen').classList.remove('show'));
-$('buyConfirm').addEventListener('click', () => { $('buyScreen').classList.remove('show'); play('buy'); });
+$('buyConfirm').addEventListener('click', () => {
+  $('buyScreen').classList.remove('show'); $('shopScreen').classList.remove('show');
+  const o = pendingOffer; pendingOffer = null; if (!o) return;
+  if (o.kind === 'activate') { state.hunt = o.id; render(); msg(`<b>${o.title}</b> active: ${fmt(bet() * costOf(o.id))} per spin. Press SPIN.`); }
+  else play(o.id);
+});
 $('errReload').addEventListener('click', () => location.reload());
 $('betUp').addEventListener('click', () => { state.betIdx = Math.min(BETS.length - 1, state.betIdx + 1); render(); });
 $('betDown').addEventListener('click', () => { state.betIdx = Math.max(0, state.betIdx - 1); render(); });
@@ -1663,7 +1813,7 @@ document.addEventListener('keydown', e => {
     if (open) { if (open.classList.contains('tap')) open.click(); }
     else (REPLAY ? runReplay() : play('base'));
   }
-  if (e.key === 'Escape') { $('rules').classList.remove('show'); $('autoScreen').classList.remove('show'); $('buyScreen').classList.remove('show'); }
+  if (e.key === 'Escape') { $('shopScreen').classList.remove('show'); $('rules').classList.remove('show'); $('autoScreen').classList.remove('show'); $('buyScreen').classList.remove('show'); }
 });
 
 /* ---------------- Règles et informations ---------------- */
@@ -1702,19 +1852,26 @@ function buildRules() {
   <ul>
     <li>3, 4 or 5 Barricades award ${M.SCATTER_SPINS[3]}, ${M.SCATTER_SPINS[4]} or ${M.SCATTER_SPINS[5]} free spins, played at the ${L.bet} that triggered them.</li>
     <li>Every Megaphone that lands expands to cover its whole reel.</li>
-    <li>The multiplier starts at ×1. Each Golden Coin adds its value to the multiplier before the wins of that spin are counted.</li>
+    <li>The multiplier starts at ×1 (×${M.MODES.superbonus.startMult} in the Super Strike). Each Golden Coin adds its value to the multiplier before the wins of that spin are counted.</li>
     <li>The multiplier also goes up by 1 after every winning free spin. It never resets during the feature.</li>
-    <li>3 or more Barricades during the feature award ${M.RETRIGGER_SPINS} more free spins.</li>
+    <li>During the feature, 2, 3, 4 or 5 Barricades award 2, 3, 4 or 5 more free spins. There is no limit to the number of extra spins.</li>
+    <li>The spin counter shows the current free spin and the total, for example 2/10.</li>
   </ul>
 
-  <h3>${L.buyMode}</h3>
-  <ul><li>The General Strike ${L.costs} ${x(M.BONUS_BUY_COST)} the ${L.totalBet} (${fmt(M.BONUS_BUY_COST * b)}). It starts with at least 3 Barricades.</li></ul>
+  <h3>${L.shop}</h3>
+  <ul>
+    <li><b>Riot Hunt</b>: every spin ${L.costs} ${x(costOf('hunt'))} the ${L.bet} (${fmt(costOf('hunt') * b)}). The General Strike triggers about ${often('hunt')} times more often (about 1 round in ${MS.hunt ? Math.round(MS.hunt.bonusEvery) : '-'}). Stays active until you deactivate it.</li>
+    <li><b>Super Riot Hunt</b>: every spin ${L.costs} ${x(costOf('superhunt'))} the ${L.bet} (${fmt(costOf('superhunt') * b)}). The General Strike triggers about ${often('superhunt')} times more often (about 1 round in ${MS.superhunt ? Math.round(MS.superhunt.bonusEvery) : '-'}).</li>
+    <li><b>General Strike</b> ${L.costs} ${x(costOf('bonus'))} the ${L.totalBet} (${fmt(costOf('bonus') * b)}). It starts with at least 3 Barricades.</li>
+    <li><b>Super Strike</b> ${L.costs} ${x(costOf('superbonus'))} the ${L.totalBet} (${fmt(costOf('superbonus') * b)}). It starts with at least 3 Barricades and the multiplier starts at ×${M.MODES.superbonus.startMult}.</li>
+    <li>Every option that ${L.costs} more than 2× the ${L.bet} asks for confirmation first.</li>
+  </ul>
 
   <h3>Buttons</h3>
   <dl class="guide">
     <dt>Spin</dt><dd>Plays one round at the current ${L.bet}. The space bar does the same.</dd>
     <dt>▲ / ▼</dt><dd>Lowers or raises the ${L.bet}.</dd>
-    <dt>Bonus</dt><dd>Starts the General Strike straight away for ${x(M.BONUS_BUY_COST)} the ${L.bet}.</dd>
+    <dt>Bonus</dt><dd>Opens the ${L.shop.toLowerCase()}: Riot Hunt modes and the General Strike / Super Strike.</dd>
     <dt>Autoplay</dt><dd>Plays a chosen number of rounds after you confirm. Press Stop at any time.</dd>
     <dt>Turbo</dt><dd>Speeds up the reels and animations.</dd>
     <dt>Sound</dt><dd>Turns all sound and music on or off.</dd>

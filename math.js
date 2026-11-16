@@ -28,14 +28,26 @@
   const WILD = 8, SCATTER = 9, EURO = 10;
 
   // Euro doré (General Strike uniquement) : chaque euro ajoute sa valeur au multiplicateur
-  const EURO_VALUES = [[1, 70], [2, 22], [3, 7], [5, 1]]; // [valeur, poids]
+  const EURO_VALUES = [[1, 700], [2, 200], [3, 60], [5, 25], [10, 14], [25, 5], [50, 2]]; // [valeur, poids] — +10 et +25 rares : ouvrent la voie au gain max
 
   // Scatter : gain (× mise totale) et nombre de tours gratuits
   const SCATTER_PAY = { 3: 1, 4: 5, 5: 20 };
   const SCATTER_SPINS = { 3: 10, 4: 12, 5: 15 };
-  const RETRIGGER_SPINS = 5;
-  const MAX_WIN = 2000;      // plafond, en × mise (atteint ~1 fois sur 2 M en jeu normal, exigence Stake : > 1 sur 10 M)
-  const BONUS_BUY_COST = 67; // prix de l'achat du bonus, en × mise
+  // Pendant le General Strike : 2 barricades = +2 tours, 3 = +3, 4 = +4, 5 = +5
+  const RETRIGGER_MIN = 2;
+  const retriggerSpins = n => (n >= RETRIGGER_MIN ? n : 0);
+  const MAX_WIN = 15000;     // plafond, en × mise
+  // Modes de jeu (un mode = un fichier de maths Stake). cost = prix en × mise ;
+  // force = probabilité qu'un tour de base soit forcé à déclencher le bonus (1 = achat direct) ;
+  // startMult = multiplicateur de départ du General Strike.
+  const MODES = {
+    base:       { cost: 1,   force: 0,     startMult: 1 },
+    hunt:       { cost: 3,   force: 0.0275, startMult: 1 },  // Riot Hunt : bonus ~6× plus souvent
+    superhunt:  { cost: 10,  force: 0.1246, startMult: 1 },  // Super Riot Hunt : bonus ~24× plus souvent
+    bonus:      { cost: 72,  force: 1,      startMult: 1 },  // General Strike (achat)
+    superbonus: { cost: 220, force: 1,      startMult: 10 }, // Super Strike (achat) : démarre à ×10
+  };
+  const BONUS_BUY_COST = MODES.bonus.cost;
 
   const PAYLINES = [
     [1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],
@@ -54,12 +66,12 @@
     [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  2,  0 ],
   ];
   // Pendant le General Strike : les mégaphones s'étendent, les euros dorés apparaissent
-  const W_FREE = [
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  1,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  1,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  1,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  4,  1,  1 ],
-    [ 14, 14, 13, 11, 10,  8,  6,  5,  0,  1,  1 ],
+  const W_FREE = [ // poids doublés pour un réglage plus fin ; euros plus rares sur le rouleau 5
+    [ 28, 28, 26, 22, 20, 16, 12, 10,  0,  2,  2 ],
+    [ 28, 28, 26, 22, 20, 16, 12, 10,  8,  2,  2 ],
+    [ 28, 28, 26, 22, 20, 16, 12, 10,  8,  2,  2 ],
+    [ 28, 28, 26, 22, 20, 16, 12, 10,  8,  2,  2 ],
+    [ 28, 28, 26, 22, 20, 16, 12, 10,  0,  2,  1 ],
   ];
 
   // Construit des bandes de rouleaux fixes (déterministes) à partir des poids,
@@ -172,10 +184,13 @@
    * mode : 'base' (mise normale) ou 'buy' (achat du bonus)
    * Renvoie { cost, totalWin, base, bonus|null } — tout en × mise.
    */
-  function playRound(mode, rng) {
+  // opts.grid : grille de base déjà tirée (utilisé par les outils de génération pour chercher le gain max)
+  function playRound(mode, rng, opts) {
     rng = rng || Math.random;
-    const buy = mode === 'buy';
-    const grid = drawGrid(STRIPS_BASE, rng, buy);
+    if (mode === 'buy') mode = 'bonus';
+    const cfg = MODES[mode] || MODES.base;
+    const forced = cfg.force >= 1 || (cfg.force > 0 && rng() < cfg.force);
+    const grid = (opts && opts.grid) || drawGrid(STRIPS_BASE, rng, forced);
     const lines = evalLines(grid);
     const scN = countScatters(grid);
     const scKey = Math.min(scN, 5);
@@ -191,14 +206,15 @@
     if (scN >= 3) {
       bonus = { spinsAwarded: SCATTER_SPINS[scKey], spins: [], win: 0 };
       let left = bonus.spinsAwarded;
-      let mult = 1; // multiplicateur (inflation + euros dorés)
+      let mult = cfg.startMult; // multiplicateur (inflation + euros dorés)
+      bonus.startMult = mult;
       while (left > 0) {
         left--;
         const raw = drawGrid(STRIPS_FREE, rng, false);
         const { grid: g, expanded } = expandWilds(raw);
         const ev = evalLines(g);
         const sN = countScatters(raw);
-        const retrig = sN >= 3 ? RETRIGGER_SPINS : 0;
+        const retrig = retriggerSpins(sN);
         left += retrig;
         // euros dorés : leur valeur s'ajoute au multiplicateur avant le calcul des gains
         const euros = [];
@@ -218,11 +234,11 @@
     }
     const capped = totalWin >= MAX_WIN;
     totalWin = Math.min(totalWin, MAX_WIN);
-    return { mode, cost: buy ? BONUS_BUY_COST : 1, totalWin, capped, base, bonus };
+    return { mode, cost: cfg.cost, totalWin, capped, base, bonus };
   }
 
   const api = { SYMBOLS, PAYLINES, LINES, WILD, SCATTER, EURO, EURO_VALUES, SCATTER_PAY, SCATTER_SPINS,
-    RETRIGGER_SPINS, MAX_WIN, BONUS_BUY_COST, STRIPS_BASE, STRIPS_FREE, playRound };
+    RETRIGGER_MIN, retriggerSpins, MAX_WIN, MODES, BONUS_BUY_COST, STRIPS_BASE, STRIPS_FREE, playRound, drawGrid, countScatters };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RueMath = api;
 })(typeof self !== 'undefined' ? self : this);
