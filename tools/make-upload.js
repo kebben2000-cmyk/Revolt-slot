@@ -7,7 +7,9 @@ const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), OUT = path.join(ROOT, 'stake-upload');
 
 const FRONT_FILES = ['index.html', 'math.js', 'math-summary.js', 'rgs.js', 'sound.js'];
-const SKIP = [/^assets[\\/]source([\\/]|$)/, /chat-anime\.webp$/, /\.DS_Store$/, /Thumbs\.db$/];
+// le jeu n'utilise que les versions WebP : les PNG d'origine (lourds) et les symboles abandonnés ne partent pas chez Stake
+const SKIP = [/^assets[\\/]source([\\/]|$)/, /chat-anime\.webp$/, /^assets[\\/]symbols[\\/].*\.png$/, /^assets[\\/]mascot[\\/]chat\.png$/,
+  /(matraque|poubelle-verte)\.webp$/, /\.DS_Store$/, /Thumbs\.db$/, /desktop\.ini$/];
 
 function copyDir(src, dst, rel = '') {
   for (const e of fs.readdirSync(src, { withFileTypes: true })) {

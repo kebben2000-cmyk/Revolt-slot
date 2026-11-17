@@ -384,8 +384,8 @@
     if (musicBuf) return Promise.resolve(musicBuf);
     if (musicRendering) return musicRendering;
     const OAC = root.OfflineAudioContext || root.webkitOfflineAudioContext;
-    if (!OAC || !ctx) return Promise.resolve(null);
-    const TAIL = 2, sr = ctx.sampleRate, c = new OAC(2, Math.ceil((LOOP + TAIL) * sr), sr);
+    if (!OAC) return Promise.resolve(null); // pas besoin du contexte audio : la musique peut se préparer dès le chargement
+    const TAIL = 2, sr = ctx ? ctx.sampleRate : 44100, c = new OAC(2, Math.ceil((LOOP + TAIL) * sr), sr);
     const nb = c.createBuffer(1, sr, sr); { const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
     const eg = (g, t, at, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + at); g.gain.exponentialRampToValueAtTime(.0001, t + at + d); };
     const mix = c.createGain(); mix.gain.value = .9;
@@ -459,7 +459,7 @@
     rs.connect(rf).connect(rg).connect(mix); rs.start(rt0); rs.stop(LOOP);
     musicRendering = c.startRendering().then(buf => {
       // les notes qui débordent après la fin de la boucle sont ajoutées au début : raccord parfait, sans clic
-      const len = Math.round(LOOP * sr), loopBuf = ctx.createBuffer(2, len, sr);
+      const len = Math.round(LOOP * sr), loopBuf = (ctx || c).createBuffer(2, len, sr);
       for (let ch = 0; ch < 2; ch++) {
         const src = buf.getChannelData(ch), dst = loopBuf.getChannelData(ch);
         dst.set(src.subarray(0, len));
@@ -646,6 +646,7 @@
     }
   }
 
-  root.RueSound = { enable, play, isOn: () => enabled,
+  // prepare() : prépare la musique du bonus dès le chargement (aucun son joué, aucun geste requis)
+  root.RueSound = { enable, play, isOn: () => enabled, prepare: () => { try { return renderMusic(); } catch (e) { musicError = String(e); } },
     status: () => ({ musicReady: !!musicBuf, musicSeconds: musicBuf ? +musicBuf.duration.toFixed(2) : 0, musicPlaying: !!(music && music.s), musicError }) };
 })(typeof self !== 'undefined' ? self : this);
