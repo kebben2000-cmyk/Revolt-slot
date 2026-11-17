@@ -1,6 +1,6 @@
 # Audit indépendant des maths de Revolt
 
-Généré le 2026-11-16 par tools/audit.js (sans utiliser le moteur).
+Généré le 2026-11-17 par tools/audit.js (sans utiliser le moteur).
 
 **Verdict global : tous les critères sont remplis ✓** (✓ base · ✓ riot_hunt · ✓ super_riot_hunt · ✓ general_strike · ✓ super_strike). Écart de RTP entre modes : 0.000 point.
 

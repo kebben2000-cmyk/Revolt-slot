@@ -18,7 +18,7 @@
     { key: 'ticket',       name: 'Ticket de caisse',      pays: [0, 0, 0, 10, 30, 100] },
     { key: 'gilet',        name: 'Gilet jaune',           pays: [0, 0, 0, 15, 40, 150] },
     { key: 'pave',         name: 'Pavé',                  pays: [0, 0, 0, 15, 50, 200] },
-    { key: 'fumigene',     name: 'Fumigène',              pays: [0, 0, 0, 20, 75, 300] },
+    { key: 'matraque',     name: 'Matraque',              pays: [0, 0, 0, 20, 75, 300] },
     { key: 'poubelle',     name: 'Poubelle en feu',       pays: [0, 0, 0, 30, 100, 400] },
     { key: 'crs',          name: 'CRS',                   pays: [0, 0, 0, 40, 150, 750] },
     { key: 'wild',         name: 'WILD — Mégaphone',      pays: [0, 0, 0, 50, 200, 1500] },

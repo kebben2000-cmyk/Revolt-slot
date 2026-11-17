@@ -479,7 +479,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 /* ---------- Écrans (dans la scène) ---------- */
 .overlay {
   position: absolute; inset: 0; z-index: 20; display: none; place-items: center; padding: 30px;
-  background: rgba(10,10,10,.82);
+  background: transparent; /* l'assombrissement vient du voile de la page (#pageDim) : continu sur tout l'écran */
 }
 .overlay.show { display: grid; }
 .poster {
@@ -504,12 +504,12 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 /* ---------- Gros gains : l'affiche collée sur le mur ----------
    Paysage : le texte à gauche, l'affiche à droite. Portrait : l'affiche en haut, le texte dessous.
    Chaque palier a sa couleur (--t1, --t2) : Revolution tricolore, May 68 papier/rouge, Riot rouge/noir, Max or. */
-#bigwin { padding: 0; place-items: stretch; background: #0b0a09; overflow: hidden; --t1: #e10600; --t2: #ffd400; }
+#bigwin { padding: 0; place-items: stretch; background: transparent; overflow: hidden; --t1: #e10600; --t2: #ffd400; }
 #bigwin.t-revolution { --t1: #1d3fbb; --t2: #e10600; }
 #bigwin.t-may68 { --t1: #e10600; --t2: #ece4d3; }
 #bigwin.t-riot { --t1: #e10600; --t2: #ff7a00; }
 #bigwin.t-max { --t1: #ffd400; --t2: #ff9d00; }
-.bw-wall { position: absolute; inset: -30px; background: url('assets/bg.jpg?v=2') center 40% / cover; filter: brightness(.32) saturate(.8) blur(2px); transform: scale(1.05); }
+.bw-wall { display: none; } /* remplacé par le voile de la page (#pageDim), continu sur tout l'écran */
 .bw-rays { position: absolute; left: 70%; top: 48%; width: 1700px; height: 1700px; margin: -850px 0 0 -850px; opacity: .42; will-change: transform;
   background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--t2) 55%, transparent) 0 6deg, transparent 6deg 18deg);
   -webkit-mask-image: radial-gradient(circle, #000 0, transparent 62%); mask-image: radial-gradient(circle, #000 0, transparent 62%);
@@ -565,7 +565,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 /* pièces d'or et confettis tricolores qui tombent */
 .bw-fall { position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; }
 .bw-fall i { position: absolute; top: -60px; left: var(--x); width: var(--s); height: var(--s); animation: fall var(--d) var(--w) linear infinite; }
-.bw-fall i.coin { background: url(assets/symbols/euro.png) center / contain no-repeat; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+.bw-fall i.coin { background: url(assets/symbols/euro.png?v=3) center / contain no-repeat; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
 .bw-fall i.bit { height: calc(var(--s) * .45); background: var(--c); }
 @keyframes fall { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(820px) translateX(var(--dx)) rotate(var(--r)); } }
 /* portrait */
@@ -576,7 +576,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 #stage.portrait #bwTitle { transform-origin: 50% 50%; }
 @media (prefers-reduced-motion: reduce) { .bw-rays, .bw-poster, .bw-fall i, .bw-sirens::before, .bw-sirens::after { animation: none !important; } }
 /* écrans plein écran : on touche n'importe où pour continuer */
-.overlay.tap { cursor: pointer; background: radial-gradient(ellipse at 50% 45%, rgba(143,4,0,.55), rgba(10,10,10,.88) 70%); }
+.overlay.tap { cursor: pointer; background: radial-gradient(ellipse 48% 52% at 50% 45%, rgba(143,4,0,.5), rgba(143,4,0,0) 100%); }
 .press {
   margin-top: 8px; border: 0; background: none; padding: 4px 20px; font-family: var(--display); text-transform: uppercase;
   font-size: 50px; letter-spacing: .02em; color: var(--yellow);
@@ -662,7 +662,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 #stage.portrait .card h4 { margin-top: 0; }
 #stage.portrait .intro .logo { font-size: 110px; }
 /* ---------- Boutique de bonus ---------- */
-#shopScreen { padding: 18px 24px; background: rgba(10,10,10,.86); }
+#shopScreen { padding: 18px 24px; background: transparent; }
 .shop { width: 100%; display: grid; justify-items: center; gap: 18px; animation: pop .45s cubic-bezier(.3,1.5,.5,1); }
 .shop-head { display: flex; align-items: center; gap: 18px; }
 .shop-head h2 { margin: 0; font-family: var(--display); font-weight: normal; text-transform: uppercase; font-size: 54px; line-height: 1;
@@ -707,8 +707,13 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 #buy.hunting { background: radial-gradient(circle at 35% 30%, #ff6a5f, var(--red) 45%, var(--red-deep)); color: var(--paper); animation: huntPulse 1.2s ease-in-out infinite alternate; }
 @keyframes huntPulse { to { box-shadow: 0 0 0 5px var(--yellow), 0 10px 0 5px var(--black), 0 0 46px rgba(255,212,0,.9); } }
 /* accueil : le décor du jeu en fond, au bon format (cover) */
-#introScreen { background: url('assets/bg.jpg?v=2') center 35% / cover no-repeat; }
-#introScreen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(10,10,10,.3)); pointer-events: none; }
+#introScreen { background: none; } /* le décor vient de la page, sans cassure sur les côtés */
+body.ov-intro #stage > :not(#introScreen):not(.overlay) { visibility: hidden; } /* le plateau est caché derrière l'accueil */
+/* voile sombre sur TOUTE la fenêtre (et pas seulement la zone de jeu) derrière les écrans plein cadre */
+#pageDim { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .25s; background: rgba(8,8,8,.72); }
+body.ov-dim #pageDim { opacity: 1; }
+body.ov-dim #stage > :not(.overlay) { visibility: hidden; } /* le plateau disparaît derrière les écrans plein cadre */
+body.ov-intro #pageDim { opacity: .25; }
 /* tout est centré sur l'écran ; le chat est sur le côté droit, derrière le bord du dernier panneau */
 #introScreen { padding: 0; }
 #introScreen .intro { position: relative; z-index: 2; }
@@ -823,9 +828,10 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
 <div id="ticker" aria-hidden="true"><div class="track" id="tickerTrack"></div></div>
 
 <!-- ===================== LE JEU ===================== -->
+<div id="pageDim" aria-hidden="true"></div>
 <div id="stage">
   <header>
-    <h1 class="logo">Rev<span>olt</span></h1>
+    <h1 class="logo notranslate" translate="no">Rev<span>olt</span></h1>
   </header>
 
   <div id="center">
@@ -905,7 +911,7 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
       <span>2 Barricades = <b>+2 spins</b>, 3 = <b>+3</b></span>
       <span id="bsStart"></span>
     </div>
-    <div class="sp-props"><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""></div>
+    <div class="sp-props"><img src="assets/symbols/scatter.png?v=3" alt=""><img src="assets/symbols/wild.png?v=3" alt=""></div>
     <button class="cta press" id="bsGo">Press to continue</button>
   </div></div>
 
@@ -920,15 +926,15 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
 
   <!-- Accueil : les trois atouts du jeu -->
   <div class="overlay tap" id="introScreen"><img id="introCat" src="assets/mascot/chat.png" alt=""><div class="intro">
-    <h2 class="logo">Rev<span>olt</span></h2>
+    <h2 class="logo notranslate" translate="no">Rev<span>olt</span></h2>
     <div class="cards">
       <div class="card">
-        <div class="card-art trio"><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""></div>
+        <div class="card-art trio"><img src="assets/symbols/scatter.png?v=3" alt=""><img src="assets/symbols/scatter.png?v=3" alt=""><img src="assets/symbols/scatter.png?v=3" alt=""></div>
         <h4>General Strike</h4>
         <p>Land 3 barricades to trigger 10 or more free spins</p>
       </div>
       <div class="card mid">
-        <div class="card-art"><img src="assets/symbols/euro.png" alt=""><span class="mult">+50</span></div>
+        <div class="card-art"><img src="assets/symbols/euro.png?v=3" alt=""><span class="mult">+50</span></div>
         <h4>Golden Coin multi</h4>
         <p>Golden Coins add up to +50 to the multiplier. It never goes down</p>
       </div>
@@ -1041,7 +1047,7 @@ function setSocial(v) { SOCIAL = !!v; L = wordsFor(SOCIAL); if ($('betLbl')) $('
 
 // Noms des symboles affichés (anglais, seule langue obligatoire)
 const NAMES = { bidon: 'Fuel Can', portefeuille: 'Empty Wallet', ticket: 'Receipt', gilet: 'Yellow Vest', pave: 'Cobblestone',
-  fumigene: 'Smoke Flare', poubelle: 'Burning Bin', crs: 'Riot Helmet', wild: 'Megaphone', scatter: 'Barricade', euro: 'Golden Coin' };
+  matraque: 'Baton', poubelle: 'Burning Bin', crs: 'Riot Helmet', wild: 'Megaphone', scatter: 'Barricade', euro: 'Golden Coin' };
 const nameOf = sym => NAMES[KEYS[sym]];
 
 // RTP et gain max par mode : calculés depuis les fichiers de maths publiés (math-summary.js)
@@ -1066,7 +1072,7 @@ const modes = () => Object.keys(MS).map(id => ({ id, label: MODE_LABEL[id] || id
 let BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
 const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false, hunt: null };
 try { if (localStorage.getItem('revolt-sound') === 'off') state.sound = false; } catch (e) { /* stockage indisponible */ }
-const VERSION = '1.2.3'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
+const VERSION = '1.2.5'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
 const spinMode = () => state.hunt || 'base';            // mode joué par le bouton de lancer
 const costOf = mode => (MS[mode] || M.MODES[mode]).cost; // prix d'un mode, en × mise
 
@@ -1153,6 +1159,18 @@ function placeMascot() {} // le chat est dans la scène, placé par le CSS
   }
 })();
 
+/* ---------------- Voile de la page derrière les écrans ---------------- */
+(() => {
+  const FULL = ['bigwin', 'wonScreen', 'bonusScreen', 'shopScreen', 'rules', 'autoScreen', 'buyScreen', 'errScreen'];
+  const sync = () => {
+    document.body.classList.toggle('ov-intro', $('introScreen').classList.contains('show'));
+    document.body.classList.toggle('ov-dim', FULL.some(id => $(id).classList.contains('show')));
+  };
+  const mo = new MutationObserver(sync);
+  document.querySelectorAll('#stage > .overlay').forEach(el => mo.observe(el, { attributes: true, attributeFilter: ['class'] }));
+  sync();
+})();
+
 /* ---------------- Son (voir sound.js) ---------------- */
 // état initial du bouton son (choix mémorisé)
 $('sound').setAttribute('aria-pressed', state.sound); $('sound').setAttribute('aria-label', state.sound ? 'Sound on' : 'Sound off');
@@ -1174,12 +1192,12 @@ for (let r = 0; r < 5; r++) {
   reel.appendChild(strip); reelsEl.appendChild(reel);
   reels.push({ reel, strip, syms: [] });
 }
-const IMG = { bidon: 1, portefeuille: 1, ticket: 1, gilet: 1, pave: 1, poubelle: 1, crs: 1, fumigene: 1, wild: 1, scatter: 1, euro: 1 };
-Object.keys(IMG).forEach(k => { const i = new Image(); i.src = `assets/symbols/${k}.png`; });
+const IMG = { bidon: 1, portefeuille: 1, ticket: 1, gilet: 1, pave: 1, poubelle: 1, crs: 1, matraque: 1, wild: 1, scatter: 1, euro: 1 };
+Object.keys(IMG).forEach(k => { const i = new Image(); i.src = `assets/symbols/${k}.png?v=3`; });
 function symArt(sym, label) {
   const k = KEYS[sym];
   return IMG[k]
-    ? `<img src="assets/symbols/${k}.png" alt="${label ? nameOf(sym) : ''}" draggable="false">`
+    ? `<img src="assets/symbols/${k}.png?v=3" alt="${label ? nameOf(sym) : ''}" draggable="false">`
     : `<svg viewBox="0 0 100 100" ${label ? `role="img" aria-label="${nameOf(sym)}"` : 'aria-hidden="true"'}><use href="#s-${k}"/></svg>`;
 }
 const SCATTER_FX = '<i class="rays"></i><i class="fire"></i><i class="fire b"></i>';
@@ -1250,7 +1268,7 @@ function scatterImpact(r, row) {
 // gros moment quand 3 barricades (ou plus) lancent le General Strike
 /* ---------- La foule lance des projectiles sur les cases ---------- */
 const PROJ = [
-  { kind: 'stone', size: 74, html: '<img src="assets/symbols/pave.png" alt="">' },
+  { kind: 'stone', size: 74, html: '<img src="assets/symbols/pave.png?v=3" alt="">' },
   { kind: 'stone', size: 46, html: '<svg viewBox="0 0 60 50"><path d="M6 30l8-18 18-6 16 8 8 16-10 14-22 2-14-6z" fill="#8a8984" stroke="#1d1d1b" stroke-width="3" stroke-linejoin="round"/><path d="M14 16l14 6 14-10M28 22l2 18" stroke="#5a5955" stroke-width="2.5" fill="none"/></svg>' },
   { kind: 'glass', size: 70, html: '<svg viewBox="0 0 60 100"><path d="M24 4h12v18c0 4 10 10 10 22v40l-6 6-4-8-6 10-5-9-5 7-4-6V44c0-12 10-18 10-22z" fill="#2f8f3a" stroke="#0e2a12" stroke-width="3" stroke-linejoin="round"/><path d="M28 30c-6 4-8 10-8 18v24" stroke="#bff0c4" stroke-width="3" fill="none" opacity=".6"/><rect x="23" y="2" width="14" height="6" fill="#1d5e26" stroke="#0e2a12" stroke-width="2"/></svg>' },
   { kind: 'can', size: 56, html: '<svg viewBox="0 0 70 70"><path d="M14 18l20-8 22 6-4 12 6 10-6 12 2 10-22 6-20-8 4-12-6-10 6-10z" fill="#c8cdd2" stroke="#1d1f22" stroke-width="3" stroke-linejoin="round"/><path d="M18 30l16-4 18 4-3 10 3 8-18 4-16-4 3-9z" fill="#e10600" stroke="#1d1f22" stroke-width="2"/><path d="M24 34l8 6M40 30l-4 12" stroke="#fff" stroke-width="2" opacity=".7"/></svg>' },
@@ -1879,10 +1897,10 @@ $('autoStart').addEventListener('click', () => {
 $('spin').addEventListener('click', () => (REPLAY ? runReplay() : play('base')));
 /* ---------- Boutique de bonus ---------- */
 const OFFER_ART = {
-  riot_hunt: '<img class="l" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""><span class="big-tag">×{n}</span>',
-  super_riot_hunt: '<img class="l" src="assets/symbols/scatter.png" alt=""><img class="r" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""><span class="big-tag">×{n}</span>',
-  general_strike: '<img class="l" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""><span class="big-tag">10+</span>',
-  super_strike: '<img class="l" src="assets/symbols/wild.png" alt=""><img src="assets/symbols/euro.png" alt=""><span class="big-tag">×{m}</span>',
+  riot_hunt: '<img class="l" src="assets/symbols/scatter.png?v=3" alt=""><img src="assets/symbols/scatter.png?v=3" alt=""><span class="big-tag">×{n}</span>',
+  super_riot_hunt: '<img class="l" src="assets/symbols/scatter.png?v=3" alt=""><img class="r" src="assets/symbols/scatter.png?v=3" alt=""><img src="assets/symbols/wild.png?v=3" alt=""><span class="big-tag">×{n}</span>',
+  general_strike: '<img class="l" src="assets/symbols/scatter.png?v=3" alt=""><img src="assets/symbols/wild.png?v=3" alt=""><span class="big-tag">10+</span>',
+  super_strike: '<img class="l" src="assets/symbols/wild.png?v=3" alt=""><img src="assets/symbols/euro.png?v=3" alt=""><span class="big-tag">×{m}</span>',
 };
 function renderShop() {
   const b = bet();

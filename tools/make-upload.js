@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, '..'), OUT = path.join(ROOT, 'stake-upload');
 
 const FRONT_FILES = ['index.html', 'math.js', 'math-summary.js', 'rgs.js', 'sound.js'];
 // symboles et mascotte en PNG pleine qualité ; les originaux (assets/source) et les symboles abandonnés ne partent pas chez Stake
-const SKIP = [/^assets[\\/]source([\\/]|$)/, /chat-anime\.webp$/, /(matraque|poubelle-verte)\.(png|webp)$/,
+const SKIP = [/^assets[\\/]source([\\/]|$)/, /chat-anime\.webp$/, /(fumigene|poubelle-verte)\.(png|webp)$/,
   /\.DS_Store$/, /Thumbs\.db$/, /desktop\.ini$/];
 
 function copyDir(src, dst, rel = '') {
