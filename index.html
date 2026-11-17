@@ -37,7 +37,7 @@ button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 /* ---------- La rue : fond, fumée, gyrophares ---------- */
 #street {
   position: fixed; inset: 0; z-index: 0; overflow: hidden;
-  background: #1a1918 url('assets/bg.jpg?v=nuit2') center 35% / cover no-repeat;
+  background: #1a1918 url('assets/bg.jpg?v=2') center 35% / cover no-repeat;
 }
 #street::before {
   content: ''; position: absolute; inset: 0; z-index: 0; transition: background .6s;
@@ -74,7 +74,8 @@ body.strike .gyro.blue, body.strike .gyro.red { animation-duration: .6s; }
 #mascot {
   left: 878px; top: 254px; width: 420px; height: 549px; z-index: 11; pointer-events: none;
   transform-origin: 50% 100%;
-  -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent 98%); mask-image: linear-gradient(180deg, #000 82%, transparent 98%);
+  /* fondu terminé au bas de la scène (85 % du chat) : jamais de coupure nette, même sur un écran plus haut que large */
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 85%); mask-image: linear-gradient(180deg, #000 70%, transparent 85%);
 }
 #stage.portrait #mascot { display: none; }
 #mascot video, #mascot canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 0; }
@@ -508,7 +509,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 #bigwin.t-may68 { --t1: #e10600; --t2: #ece4d3; }
 #bigwin.t-riot { --t1: #e10600; --t2: #ff7a00; }
 #bigwin.t-max { --t1: #ffd400; --t2: #ff9d00; }
-.bw-wall { position: absolute; inset: -30px; background: url(assets/bg.jpg) center 40% / cover; filter: brightness(.32) saturate(.8) blur(2px); transform: scale(1.05); }
+.bw-wall { position: absolute; inset: -30px; background: url('assets/bg.jpg?v=2') center 40% / cover; filter: brightness(.32) saturate(.8) blur(2px); transform: scale(1.05); }
 .bw-rays { position: absolute; left: 70%; top: 48%; width: 1700px; height: 1700px; margin: -850px 0 0 -850px; opacity: .42; will-change: transform;
   background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--t2) 55%, transparent) 0 6deg, transparent 6deg 18deg);
   -webkit-mask-image: radial-gradient(circle, #000 0, transparent 62%); mask-image: radial-gradient(circle, #000 0, transparent 62%);
@@ -564,7 +565,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 /* pièces d'or et confettis tricolores qui tombent */
 .bw-fall { position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; }
 .bw-fall i { position: absolute; top: -60px; left: var(--x); width: var(--s); height: var(--s); animation: fall var(--d) var(--w) linear infinite; }
-.bw-fall i.coin { background: url(assets/symbols/euro.webp) center / contain no-repeat; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+.bw-fall i.coin { background: url(assets/symbols/euro.png) center / contain no-repeat; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
 .bw-fall i.bit { height: calc(var(--s) * .45); background: var(--c); }
 @keyframes fall { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(820px) translateX(var(--dx)) rotate(var(--r)); } }
 /* portrait */
@@ -706,7 +707,7 @@ body #stage.portrait .close { padding: 22px 28px; font-size: 26px; }
 #buy.hunting { background: radial-gradient(circle at 35% 30%, #ff6a5f, var(--red) 45%, var(--red-deep)); color: var(--paper); animation: huntPulse 1.2s ease-in-out infinite alternate; }
 @keyframes huntPulse { to { box-shadow: 0 0 0 5px var(--yellow), 0 10px 0 5px var(--black), 0 0 46px rgba(255,212,0,.9); } }
 /* accueil : le décor du jeu en fond, au bon format (cover) */
-#introScreen { background: url(assets/bg.jpg) center 35% / cover no-repeat; }
+#introScreen { background: url('assets/bg.jpg?v=2') center 35% / cover no-repeat; }
 #introScreen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(10,10,10,.3)); pointer-events: none; }
 /* tout est centré sur l'écran ; le chat est sur le côté droit, derrière le bord du dernier panneau */
 #introScreen { padding: 0; }
@@ -904,7 +905,7 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
       <span>2 Barricades = <b>+2 spins</b>, 3 = <b>+3</b></span>
       <span id="bsStart"></span>
     </div>
-    <div class="sp-props"><img src="assets/symbols/scatter.webp" alt=""><img src="assets/symbols/wild.webp" alt=""></div>
+    <div class="sp-props"><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""></div>
     <button class="cta press" id="bsGo">Press to continue</button>
   </div></div>
 
@@ -918,16 +919,16 @@ body.replay #balBox .lbl::after { content: ' (replay)'; }
   </div></div>
 
   <!-- Accueil : les trois atouts du jeu -->
-  <div class="overlay tap" id="introScreen"><img id="introCat" src="assets/mascot/chat.webp" alt=""><div class="intro">
+  <div class="overlay tap" id="introScreen"><img id="introCat" src="assets/mascot/chat.png" alt=""><div class="intro">
     <h2 class="logo">Rev<span>olt</span></h2>
     <div class="cards">
       <div class="card">
-        <div class="card-art trio"><img src="assets/symbols/scatter.webp" alt=""><img src="assets/symbols/scatter.webp" alt=""><img src="assets/symbols/scatter.webp" alt=""></div>
+        <div class="card-art trio"><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""></div>
         <h4>General Strike</h4>
         <p>Land 3 barricades to trigger 10 or more free spins</p>
       </div>
       <div class="card mid">
-        <div class="card-art"><img src="assets/symbols/euro.webp" alt=""><span class="mult">+50</span></div>
+        <div class="card-art"><img src="assets/symbols/euro.png" alt=""><span class="mult">+50</span></div>
         <h4>Golden Coin multi</h4>
         <p>Golden Coins add up to +50 to the multiplier. It never goes down</p>
       </div>
@@ -1065,7 +1066,7 @@ const modes = () => Object.keys(MS).map(id => ({ id, label: MODE_LABEL[id] || id
 let BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
 const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false, hunt: null };
 try { if (localStorage.getItem('revolt-sound') === 'off') state.sound = false; } catch (e) { /* stockage indisponible */ }
-const VERSION = '1.2.1'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
+const VERSION = '1.2.2'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
 const spinMode = () => state.hunt || 'base';            // mode joué par le bouton de lancer
 const costOf = mode => (MS[mode] || M.MODES[mode]).cost; // prix d'un mode, en × mise
 
@@ -1111,13 +1112,13 @@ function rel(el, parent) {
 // Lecture principale : une vidéo transparente (WebM VP9 + alpha, 24 images/s, montée en aller-retour pour
 // une boucle sans saut), décodée par le lecteur vidéo du navigateur : fluide et sans charge pour le jeu.
 // Safari ne gère pas la transparence de ce format : il reçoit les planches d'images à la place.
-const MASCOT_ANIM = { sheets: ['assets/mascot/chat-sheet-1.webp?v=2', 'assets/mascot/chat-sheet-2.webp?v=2'], frames: 122, per: 61, cols: 12, w: 318, h: 444, fps: 12 };
+const MASCOT_ANIM = { sheets: ['assets/mascot/chat-sheet-1.webp?v=3', 'assets/mascot/chat-sheet-2.webp?v=3'], frames: 122, per: 61, cols: 12, w: 318, h: 444, fps: 12 };
 function placeMascot() {} // le chat est dans la scène, placé par le CSS
 (function mascotPlayer() {
   const vid = $('mascotVid'), cv = $('mascotCv');
   const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
   if (!isSafari && vid.canPlayType('video/webm; codecs="vp9"')) {
-    vid.src = 'assets/mascot/chat-loop.webm?v=2';
+    vid.src = 'assets/mascot/chat-loop.webm?v=3';
     const go = () => vid.play().catch(() => addEventListener('pointerdown', () => vid.play().catch(() => {}), { once: true }));
     // la vidéo ne se décode que si on la voit : en pause sous un écran plein (gros gain, bonus, boutique…) et en portrait
     const covered = () => document.hidden || $('stage').classList.contains('portrait') ||
@@ -1174,11 +1175,11 @@ for (let r = 0; r < 5; r++) {
   reels.push({ reel, strip, syms: [] });
 }
 const IMG = { bidon: 1, portefeuille: 1, ticket: 1, gilet: 1, pave: 1, poubelle: 1, crs: 1, fumigene: 1, wild: 1, scatter: 1, euro: 1 };
-Object.keys(IMG).forEach(k => { const i = new Image(); i.src = `assets/symbols/${k}.webp`; });
+Object.keys(IMG).forEach(k => { const i = new Image(); i.src = `assets/symbols/${k}.png`; });
 function symArt(sym, label) {
   const k = KEYS[sym];
   return IMG[k]
-    ? `<img src="assets/symbols/${k}.webp" alt="${label ? nameOf(sym) : ''}" draggable="false">`
+    ? `<img src="assets/symbols/${k}.png" alt="${label ? nameOf(sym) : ''}" draggable="false">`
     : `<svg viewBox="0 0 100 100" ${label ? `role="img" aria-label="${nameOf(sym)}"` : 'aria-hidden="true"'}><use href="#s-${k}"/></svg>`;
 }
 const SCATTER_FX = '<i class="rays"></i><i class="fire"></i><i class="fire b"></i>';
@@ -1249,7 +1250,7 @@ function scatterImpact(r, row) {
 // gros moment quand 3 barricades (ou plus) lancent le General Strike
 /* ---------- La foule lance des projectiles sur les cases ---------- */
 const PROJ = [
-  { kind: 'stone', size: 74, html: '<img src="assets/symbols/pave.webp" alt="">' },
+  { kind: 'stone', size: 74, html: '<img src="assets/symbols/pave.png" alt="">' },
   { kind: 'stone', size: 46, html: '<svg viewBox="0 0 60 50"><path d="M6 30l8-18 18-6 16 8 8 16-10 14-22 2-14-6z" fill="#8a8984" stroke="#1d1d1b" stroke-width="3" stroke-linejoin="round"/><path d="M14 16l14 6 14-10M28 22l2 18" stroke="#5a5955" stroke-width="2.5" fill="none"/></svg>' },
   { kind: 'glass', size: 70, html: '<svg viewBox="0 0 60 100"><path d="M24 4h12v18c0 4 10 10 10 22v40l-6 6-4-8-6 10-5-9-5 7-4-6V44c0-12 10-18 10-22z" fill="#2f8f3a" stroke="#0e2a12" stroke-width="3" stroke-linejoin="round"/><path d="M28 30c-6 4-8 10-8 18v24" stroke="#bff0c4" stroke-width="3" fill="none" opacity=".6"/><rect x="23" y="2" width="14" height="6" fill="#1d5e26" stroke="#0e2a12" stroke-width="2"/></svg>' },
   { kind: 'can', size: 56, html: '<svg viewBox="0 0 70 70"><path d="M14 18l20-8 22 6-4 12 6 10-6 12 2 10-22 6-20-8 4-12-6-10 6-10z" fill="#c8cdd2" stroke="#1d1f22" stroke-width="3" stroke-linejoin="round"/><path d="M18 30l16-4 18 4-3 10 3 8-18 4-16-4 3-9z" fill="#e10600" stroke="#1d1f22" stroke-width="2"/><path d="M24 34l8 6M40 30l-4 12" stroke="#fff" stroke-width="2" opacity=".7"/></svg>' },
@@ -1516,10 +1517,10 @@ function countUp(el, to, ms) {
 }
 // Niveaux de gros gain. art = illustration plein écran (assets/wins/), si elle existe pour ce niveau.
 const BIG_WINS = [
-  { id: 'max', min: M.MAX_WIN, step: 'Max win', title: 'Max win!', sub: 'The whole country rises. You took it all.', art: 'assets/wins/may68.webp' },
-  { id: 'riot', min: 100, step: 'Riot', title: 'Riot!', sub: 'The street has spoken.', art: 'assets/wins/riot.webp' },
-  { id: 'may68', min: 30, step: 'May 68', title: 'May 68!', sub: 'Beneath the cobblestones, the beach.', art: 'assets/wins/may68.webp' },
-  { id: 'revolution', min: 10, step: 'Revolution', title: 'Revolution!', sub: 'The people take the streets.', art: 'assets/wins/revolution.webp?v=3' },
+  { id: 'max', min: M.MAX_WIN, step: 'Max win', title: 'Max win!', sub: 'The whole country rises. You took it all.', art: 'assets/wins/may68.webp?v=2' },
+  { id: 'riot', min: 100, step: 'Riot', title: 'Riot!', sub: 'The street has spoken.', art: 'assets/wins/riot.webp?v=2' },
+  { id: 'may68', min: 30, step: 'May 68', title: 'May 68!', sub: 'Beneath the cobblestones, the beach.', art: 'assets/wins/may68.webp?v=2' },
+  { id: 'revolution', min: 10, step: 'Revolution', title: 'Revolution!', sub: 'The people take the streets.', art: 'assets/wins/revolution.webp?v=4' },
 ];
 BIG_WINS.forEach(b => { if (b.art) { const i = new Image(); i.src = b.art; } }); // préchargées pour s'afficher sans délai
 async function bigWin(x, amount) {
@@ -1878,10 +1879,10 @@ $('autoStart').addEventListener('click', () => {
 $('spin').addEventListener('click', () => (REPLAY ? runReplay() : play('base')));
 /* ---------- Boutique de bonus ---------- */
 const OFFER_ART = {
-  riot_hunt: '<img class="l" src="assets/symbols/scatter.webp" alt=""><img src="assets/symbols/scatter.webp" alt=""><span class="big-tag">×{n}</span>',
-  super_riot_hunt: '<img class="l" src="assets/symbols/scatter.webp" alt=""><img class="r" src="assets/symbols/scatter.webp" alt=""><img src="assets/symbols/wild.webp" alt=""><span class="big-tag">×{n}</span>',
-  general_strike: '<img class="l" src="assets/symbols/scatter.webp" alt=""><img src="assets/symbols/wild.webp" alt=""><span class="big-tag">10+</span>',
-  super_strike: '<img class="l" src="assets/symbols/wild.webp" alt=""><img src="assets/symbols/euro.webp" alt=""><span class="big-tag">×{m}</span>',
+  riot_hunt: '<img class="l" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/scatter.png" alt=""><span class="big-tag">×{n}</span>',
+  super_riot_hunt: '<img class="l" src="assets/symbols/scatter.png" alt=""><img class="r" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""><span class="big-tag">×{n}</span>',
+  general_strike: '<img class="l" src="assets/symbols/scatter.png" alt=""><img src="assets/symbols/wild.png" alt=""><span class="big-tag">10+</span>',
+  super_strike: '<img class="l" src="assets/symbols/wild.png" alt=""><img src="assets/symbols/euro.png" alt=""><span class="big-tag">×{m}</span>',
 };
 function renderShop() {
   const b = bet();
