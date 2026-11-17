@@ -72,7 +72,7 @@ body.strike .gyro.blue, body.strike .gyro.red { animation-duration: .6s; }
    pas besoin de le faire tenir sur le pavé. Un fondu en bas adoucit la coupe. */
 #stage { overflow: hidden; }
 #mascot {
-  left: 878px; top: 254px; width: 420px; height: 549px; z-index: 11; pointer-events: none;
+  left: 905px; top: 336px; width: 388px; height: 507px; z-index: 11; pointer-events: none;
   transform-origin: 50% 100%;
   /* fondu terminé au bas de la scène (85 % du chat) : jamais de coupure nette, même sur un écran plus haut que large */
   -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 85%); mask-image: linear-gradient(180deg, #000 70%, transparent 85%);
@@ -87,7 +87,7 @@ body.strike .gyro.blue, body.strike .gyro.red { animation-duration: .6s; }
   70% { transform: translateY(0) scaleY(.97); }
   100% { transform: none; }
 }
-header { left: 585px; top: 2px; transform: translateX(-50%); z-index: 10; pointer-events: none; }
+header { left: 640px; top: 2px; transform: translateX(-50%); z-index: 10; pointer-events: none; }
 #stage.portrait header { left: 50%; top: 34px; }
 .logo {
   font-family: var(--display); font-size: 92px; line-height: .9; font-weight: normal;
@@ -101,7 +101,7 @@ header { left: 585px; top: 2px; transform: translateX(-50%); z-index: 10; pointe
 #stage.portrait .logo { font-size: 110px; }
 .logo span { color: var(--yellow); }
 
-#center { left: 585px; top: 92px; transform: translateX(-50%); }
+#center { left: 640px; top: 92px; transform: translateX(-50%); }
 #stage.portrait #center { left: 50%; top: 182px; }
 
 /* ---------- Panneau de gauche : l'offre du bonus, puis le compteur pendant le bonus ---------- */
@@ -346,7 +346,7 @@ body.strike #stage.portrait #side .promo { display: none; }
 
 /* ---------- Message sous la grille ---------- */
 #msg {
-  left: 585px; top: 538px; transform: translateX(-50%); width: 680px; text-align: center;
+  left: 640px; top: 538px; transform: translateX(-50%); width: 680px; text-align: center;
   font-size: 15px; line-height: 1.3; color: var(--paper); background: rgba(18,18,18,.75); padding: 6px 12px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -1066,7 +1066,7 @@ const modes = () => Object.keys(MS).map(id => ({ id, label: MODE_LABEL[id] || id
 let BETS = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 10, 20, 50, 100];
 const state = { balance: 1000, betIdx: 4, busy: false, turbo: false, auto: 0, sound: true, fatal: false, hunt: null };
 try { if (localStorage.getItem('revolt-sound') === 'off') state.sound = false; } catch (e) { /* stockage indisponible */ }
-const VERSION = '1.2.2'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
+const VERSION = '1.2.3'; // à incrémenter à chaque envoi à Stake (affichée en bas des règles)
 const spinMode = () => state.hunt || 'base';            // mode joué par le bouton de lancer
 const costOf = mode => (MS[mode] || M.MODES[mode]).cost; // prix d'un mode, en × mise
 
@@ -1121,7 +1121,7 @@ function placeMascot() {} // le chat est dans la scène, placé par le CSS
     vid.src = 'assets/mascot/chat-loop.webm?v=3';
     const go = () => vid.play().catch(() => addEventListener('pointerdown', () => vid.play().catch(() => {}), { once: true }));
     // la vidéo ne se décode que si on la voit : en pause sous un écran plein (gros gain, bonus, boutique…) et en portrait
-    const covered = () => document.hidden || $('stage').classList.contains('portrait') ||
+    const covered = () => $('stage').classList.contains('portrait') || // onglet en arrière-plan : le navigateur s'en charge seul
       !!document.querySelector('#bigwin.show, #wonScreen.show, #bonusScreen.show, #introScreen.show, #shopScreen.show, #rules.show');
     const sync = () => { if (covered()) { if (!vid.paused) vid.pause(); } else if (vid.paused) go(); };
     const mo = new MutationObserver(sync); // seulement la scène et les écrans (pas tout le plateau : trop de changements)
